@@ -6,7 +6,7 @@ import * as core from '../game-core.js';
 import * as modes from '../game-modes.js';
 // Execute the production update loop with synthetic input and a minimal DOM, without a camera.
 function game(){
- const nodes=new Map();const ctx=new Proxy({},{get:()=>()=>{}});
+ const nodes=new Map();const ctx=new Proxy({},{get:(_,key)=>key==='createRadialGradient'||key==='createLinearGradient'?()=>({addColorStop(){}}):()=>{}});
  const element=()=>({textContent:'',hidden:false,open:false,checked:false,dataset:{},classList:{toggle(){}},setAttribute(){},removeAttribute(){},focus(){},pause(){},load(){},getContext:()=>ctx,getBoundingClientRect:()=>({left:0,top:0,width:1000,height:600}),querySelector:()=>element()});
  const node=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
  const rewards=[5,15,30].map(n=>{const e=element();e.dataset.reward=n;const progress=element(),small=element();e.querySelector=q=>q==='progress'?progress:small;return e;});
@@ -39,3 +39,13 @@ test('cancelled fingers do not leave active touch controls',()=>{const g=game();
 test('mobile finger swipe slices fruit and records a glowing trail',()=>{const g=game();g.run("selectedGame='fruit';baseSession('demo');startRound();spawnClock=0;targets=[{id:99,x:.5,y:.5,r:.06,type:'fruit',fruit:2,life:0,ttl:10,vx:0,vy:0,seed:0}];canvas.onpointerdown({pointerId:1,pointerType:'touch',clientX:200,clientY:300,preventDefault(){}});canvas.onpointermove({pointerId:1,pointerType:'touch',clientX:800,clientY:300,preventDefault(){}});canvas.onpointerup({pointerId:1,preventDefault(){}});step(.01,100);");assert.equal(g.run('round.score'),10);assert.equal(g.run('slices.length'),2);assert.ok(g.run("swipeTrails.get('finger:1').length")>=2);g.run('step(.01,700)');assert.equal(g.run('swipeTrails.size'),0);});
 
 test('side-entry fruit cannot be sliced until it is fully in view',()=>{const g=game();g.run("selectedGame='fruit';baseSession('demo');startRound();spawnClock=0;pointer={x:.01,y:.5,active:true};mousePrev={x:0,y:.5,time:90};targets=[{id:99,x:.01,y:.5,r:.06,type:'fruit',fruit:0,life:.4,ttl:10,vx:0,vy:0,gravity:0,tossed:true,seed:0}];step(.01,100);");assert.equal(g.run('round.score'),0);g.run("targets[0].x=.5;pointer.x=.5;mousePrev={x:.49,y:.5,time:190};step(.01,200);");assert.equal(g.run('round.score'),10);});
+
+
+test('all games render active hands with loaded and fallback artwork',()=>{
+ for(const type of ['bubbles','fruit','pets'])for(const loaded of [false,true]){
+  const g=game();
+  g.run("selectedGame='"+type+"';baseSession('demo');startRound();pointer={x:.5,y:.5,active:true};art.garden.complete=true;art.garden.naturalWidth=1280;art.garden.naturalHeight=720;");
+  if(loaded)g.run('for(const img of Object.values(art)){img.complete=true;img.naturalWidth=1024;img.naturalHeight=1024;}');
+  assert.doesNotThrow(()=>g.run('step(.016,100);draw(100);step(.016,116);draw(116);'),type+' loaded='+loaded);
+ }
+});

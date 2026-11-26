@@ -57,3 +57,6 @@ Browser QA at 390 x 844 confirmed upward fruit tosses, no knife prop, a visible 
 
 ## Version 0.9.1
 Trajectory tests cover center-directed side launches and complete off-screen sprite placement on landscape and portrait aspect ratios. Entry collision gating prevents hits while fruit is still entering.
+
+## 0.9.2 — Bubble Magic rendering regression
+Restored butterfly renderer accidentally removed in 0.9.0. Added production draw tests for active hands in all three games with loaded and fallback artwork. Test reproduced `ReferenceError: butterfly is not defined` before the fix.

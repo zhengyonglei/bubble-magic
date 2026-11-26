@@ -1,11 +1,11 @@
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.9.1';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.9.1';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.9.2';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.9.2';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.9.1';
+const BUILD='0.9.2';
 const art={};for(const [name,file] of Object.entries({cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -294,6 +294,7 @@ function drawBasket(h,front){
  else{ctx.font='100px sans-serif';ctx.fillText('🧺',-r,r);}
  ctx.restore();
 }
+function butterfly(x,y,t,index){if(artReady('atlas')){const flap=reduceMotion?1:.82+.18*Math.sin(t*9+index);ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(t*2+index)*.1);sprite('butterfly',0,0,65*flap,58);ctx.restore();return;}if(artReady('butterfly')){const flap=reduceMotion?1:.8+.2*Math.sin(t*9+index);ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(t*2+index)*.12);ctx.drawImage(art.butterfly,-32*flap,-22,64*flap,44);ctx.restore();return;}ctx.save();ctx.translate(x,y);const flap=reduceMotion?1:.7+.3*Math.sin(t*9+index);ctx.shadowColor='#d394ff';ctx.shadowBlur=12;for(const side of [-1,1]){ellipse(side*11*flap,-7,12*flap,14,index%2?'#6ddbc9':'#c2a0fa');ellipse(side*9*flap,9,9*flap,10,index%2?'#b6f5e2':'#ffb7d9');ellipse(side*13*flap,-9,4*flap,5,'#ffffffbb');}ctx.shadowBlur=0;ellipse(0,1,3,13,'#64517f');ctx.strokeStyle='#64517f';ctx.lineWidth=1.5;for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(0,-9);ctx.quadraticCurveTo(side*3,-20,side*7,-18);ctx.stroke();}ctx.restore();}
 function handProp(h,t,index){const x=h.x*W,y=h.y*H;if(selectedGame==='bubbles'){butterfly(x,y,t,index);return;}if(selectedGame==='fruit'){ctx.save();ctx.shadowColor='#6af9ff';ctx.shadowBlur=reduceMotion?0:18;ellipse(x,y,6,6,'#fffbea');ctx.restore();}}
 function drawSwipeTrails(now){
  for(const path of swipeTrails.values())for(let i=1;i<path.length;i++){
