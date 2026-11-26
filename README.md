@@ -2,7 +2,7 @@
 
 A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.9.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.9.1.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
@@ -99,3 +99,5 @@ Version 0.7.2 uses one smaller basket per person, centered between their two tra
 Version 0.8.0: Bubble Magic uses one obstacle-free Bubble party mode (no difficulty picker), spawning up to 20 varied bubbles from outside the left/right edges. Pop feedback adds expanding rings and sparkle bursts. Choose Play with mouse or touch to test on a phone without a camera: tap, swipe or use several fingers. Touch cancel/release clears controls, and the play area fits the phone viewport. Fruit and pet games retain Easy/Medium/Hard.
 
 Version 0.9.0: Fruit Slice replaces the toy knife with a violet-and-white glowing motion trail for each hand/finger. Fruit launches from below the screen toward the center, reaches an apex, and falls under gravity. Easy/Medium/Hard control toss speed as well as spawn rate. On a phone select Play with mouse or touch and swipe through the fruit; stationary taps do not slice. Quick finger swipes are retained between frames, while camera tracking jumps remain rejected.
+
+Version 0.9.1: fruit launches fully outside the left/right edges at a lower-middle height and arcs inward. Newly tossed objects cannot be hit during their first quarter-second or while their collision circle still crosses a side edge. Side margins scale with the screen aspect ratio, including portrait phones.

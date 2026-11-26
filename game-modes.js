@@ -59,8 +59,9 @@ export function crownGeometry(points,width,height){
  return {x:eyes?(left.x+right.x)*width/2:nose.x*width,y:bottom-h/2,width:faceWidth*1.35,height:h};
 }
 
-export function fruitLaunch(level,index,r,aimY=.42,random=Math.random){
- const gravity={easy:.34,medium:.46,hard:.6}[level],x=index%2?.12+random()*.14:.74+random()*.14,y=1+r;
+export function fruitLaunch(level,index,r,aimY=.42,random=Math.random,aspect=1){
+ const margin=r*aspect*1.3+.02;
+ const gravity={easy:.34,medium:.46,hard:.6}[level],x=index%2?-margin:1+margin,y=.66+random()*.08;
  const apexY=Math.max(.28,Math.min(.52,aimY)),vy=-Math.sqrt(2*gravity*(y-apexY)),apexTime=-vy/gravity;
  const aimX=.42+random()*.16;
  return {x,y,vx:(aimX-x)/apexTime,vy,gravity,tossed:true,ttl:10};

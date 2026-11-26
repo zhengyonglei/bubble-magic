@@ -1,11 +1,11 @@
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.9.0';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.9.0';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.9.1';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.9.1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.9.0';
+const BUILD='0.9.1';
 const art={};for(const [name,file] of Object.entries({cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -168,7 +168,7 @@ function spawn(now,practice=false){
   const type=cactus?'cactus':selectedGame==='fruit'?'fruit':selectedGame==='pets'?(spawnCount%2?'cat':'dog'):star?'star':'bubble',r=level().radius*(selectedGame==='bubbles'&&!cactus?bubbleSize(spawnCount):selectedGame==='fruit'&&!cactus?fruitSize(spawnCount%3):selectedGame==='pets'&&!cactus?1.6:1);
   const petBaskets=playerBaskets(hands);const fittedRadius=type==='cat'||type==='dog'?Math.min(r,...petBaskets.map(h=>basketGeometry(h,W,H).halfWidth*.95/H)):r;
   if(selectedGame==='fruit'){
-    targets.push({id:++targetId,r,type,life:0,fruit:spawnCount%3,color:colors[spawnCount%colors.length],seed:Math.random()*6,...fruitLaunch(difficulty,spawnCount,r,zone.y)});spawnCount++;if(cactus)hazardClock=0;return;
+    targets.push({id:++targetId,r,type,life:0,fruit:spawnCount%3,color:colors[spawnCount%colors.length],seed:Math.random()*6,...fruitLaunch(difficulty,spawnCount,r,zone.y,Math.random,H/W)});spawnCount++;if(cactus)hazardClock=0;return;
   }
   let t;
   for(let attempt=0;attempt<15;attempt++){
@@ -218,6 +218,7 @@ function step(dt,now){
     if(spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
     for(const t of targets){t.prev={x:t.x,y:t.y};moveTarget(t,dt,selectedGame,difficulty);}
     const hit=targets.filter(t=>controls.some(h=>{
+      if(t.tossed&&(t.life<.25||t.x*W<t.r*H||t.x*W>W-t.r*H))return false;
       if(selectedGame==='pets'&&t.type!=='cactus'){
         const contact=basketContact(t,h,W,H,now);
         if(contact==='catch'){caughtPets.push({type:t.type,r:t.r,startX:t.x-h.x,startY:t.y-h.y,hand:{...h},handId:h.id,life:0});return true;}
@@ -236,7 +237,7 @@ function step(dt,now){
       if(outcome.cactus){toast('Ouch! Cactus −'+outcome.penalty+' points. Combo reset.');}
       else {const old=rewardLevel(totalPops);totalPops++;updateRewards();if(rewardLevel(totalPops)>old)toast(`✦ ${REWARDS[old].name} for everyone!`);}
     }
-    const ids=new Set(hit.map(t=>t.id));targets=targets.filter(t=>!ids.has(t.id)&&t.life<t.ttl&&(t.tossed?t.y<1.3&&t.x>-.3&&t.x<1.3:t.blown?t.x>-.25&&t.x<1.25&&t.y>.12&&t.y<.8:t.y>.07&&t.y<.83));
+    const ids=new Set(hit.map(t=>t.id));targets=targets.filter(t=>!ids.has(t.id)&&t.life<t.ttl&&(t.tossed?t.y<1.3&&t.x>-t.r*H/W*2-.1&&t.x<1+t.r*H/W*2+.1:t.blown?t.x>-.25&&t.x<1.25&&t.y>.12&&t.y<.8:t.y>.07&&t.y<.83));
   }
   if(active){caughtPets.forEach(p=>{p.life+=dt;const h=controls.find(h=>h.id===p.handId);if(h)p.hand={...h};});caughtPets=caughtPets.filter(p=>p.life<2.4);}
   popRings.forEach(p=>p.life+=dt);popRings=popRings.filter(p=>p.life<.65);

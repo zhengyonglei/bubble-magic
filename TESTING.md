@@ -54,3 +54,6 @@ Version 0.8.0 verification: 28 automated checks pass. Browser QA at 390 × 844 c
 31 automated tests pass. New checks verify off-screen launch, center apex and downward fall for all difficulties, camera-jump rejection versus valid direct-input sweeps, and a quick mobile swipe that scores, produces directional fruit halves, and creates a fading trail. Physical-phone and live-camera checks remain to be done on the user devices.
 
 Browser QA at 390 x 844 confirmed upward fruit tosses, no knife prop, a visible violet/white swipe trail, two fruit sliced for 20 points, and directional separation of the halves. No browser runtime errors observed.
+
+## Version 0.9.1
+Trajectory tests cover center-directed side launches and complete off-screen sprite placement on landscape and portrait aspect ratios. Entry collision gating prevents hits while fruit is still entering.
