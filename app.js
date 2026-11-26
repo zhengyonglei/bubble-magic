@@ -1,11 +1,12 @@
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.9.2';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.9.2';
+import {GardenMusic} from './music.js?v=0.10.0';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.10.0';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.10.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.9.2';
+const BUILD='0.10.0';
 const art={};for(const [name,file] of Object.entries({cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -20,7 +21,7 @@ let nextPlayerId=1,targets=[],particles=[],labels=[],targetId=0,spawnClock=0,spa
 let readyClock=0,hazardClock=0,caughtPets=[],popRings=[];const fingers=new Map();
 let slices=[],previewRewards=false;const swipeTrails=new Map();
 let totalPops=0,manualPause=false,recoveryUntil=0,previousActive=false;
-let pointer={x:.74,y:.5,active:false},mousePrev=null,sound=false,audio=null,lastTone=0;
+let pointer={x:.74,y:.5,active:false},mousePrev=null,sound=false,audio=null,music=null,lastTone=0;
 let lastTick=performance.now(),fpsSince=lastTick,toastTimer=null,trailClock=0;
 let config={players:2,cutout:true,quality:'balanced',hazards:false,height:'auto'};
 let sessionConfig={...config};
@@ -39,18 +40,33 @@ document.querySelectorAll('[data-game]').forEach(button=>button.onclick=()=>choo
 function setPlayers(n){config.players=Number(n);$('players').value=String(n);document.querySelectorAll('[data-players]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.players)===config.players)));}
 document.querySelectorAll('[data-players]').forEach(b=>b.onclick=()=>setPlayers(b.dataset.players));
 $('preview-rewards').onchange=()=>{previewRewards=$('preview-rewards').checked;toast(previewRewards?'Reward preview on — score and unlocks unchanged.':'Showing earned rewards.');};
-$('settings-button').onclick=()=>{$('settings').showModal();updateDiagnostics();};
+$('settings-button').onclick=()=>{$('settings').showModal();music?.update(false);updateDiagnostics();};
 for(const id of ['players','quality','cutout','hazards','height'])$(id).onchange=()=>{config[id]=$(id).type==='checkbox'?$(id).checked:id==='players'?Number($(id).value):$(id).value;};
 $('players').onchange=()=>setPlayers($('players').value);
 $('reset-rewards').onclick=()=>{totalPops=0;updateRewards();toast('A fresh dress-up adventure!');};
-$('sound').onclick=()=>{sound=!sound;if(sound){audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume();} $('sound').innerHTML=`♫ <span>Sound ${sound?'on':'off'}</span>`;$('sound').setAttribute('aria-label',`Turn sound ${sound?'off':'on'}`);};
-$('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{toast('Fullscreen is unavailable in this browser.');}};
-document.addEventListener('fullscreenchange',()=>{$('fullscreen').innerHTML=`⛶ <span>${document.fullscreenElement?'Exit fullscreen':'Fullscreen'}</span>`;});
+function soundLabel(){ $('sound').innerHTML=`♫ <span>Music ${sound?'on':'off'}</span>`;$('sound').setAttribute('aria-label',`Turn music and sounds ${sound?'off':'on'}`);$('sound').setAttribute('aria-pressed',String(sound)); }
+$('sound').onclick=async()=>{
+  sound=!sound;soundLabel();
+  if(!sound){music?.update(false);return;}
+  try{audio??=new (window.AudioContext||window.webkitAudioContext)();music??=new GardenMusic(audio);await audio.resume();}
+  catch{sound=false;soundLabel();toast('Audio could not start. Tap Music to try again.');}
+};
+let expanded=false;
+function fullscreenLabel(){const on=!!document.fullscreenElement||expanded;$('fullscreen').innerHTML=`⛶ <span>${on?'Exit fullscreen':'Fullscreen'}</span>`;$('fullscreen').setAttribute('aria-label',on?'Exit fullscreen':'Enter fullscreen');$('fullscreen').setAttribute('aria-pressed',String(on));resize();}
+$('fullscreen').onclick=async()=>{
+  if(document.fullscreenElement){try{await document.exitFullscreen();}catch{toast('Use Escape to exit fullscreen.');}return;}
+  if(expanded){expanded=false;document.documentElement.classList.remove('expanded-play');fullscreenLabel();return;}
+  try{if(!document.documentElement.requestFullscreen)throw Error('unsupported');await document.documentElement.requestFullscreen();}
+  catch{expanded=true;document.documentElement.classList.add('expanded-play');toast('Expanded play area enabled. Browser controls may remain visible.');}
+  fullscreenLabel();
+};
+document.addEventListener('fullscreenchange',fullscreenLabel);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&expanded){expanded=false;document.documentElement.classList.remove('expanded-play');fullscreenLabel();}});
 function tone(star=false,cactus=false){if(!sound||!audio||audio.state!=='running'||performance.now()-lastTone<45)return;lastTone=performance.now();const t=audio.currentTime,o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(cactus?180:star?880:520+Math.random()*220,t);o.frequency.exponentialRampToValueAtTime(cactus?90:star?1320:900,t+.1);g.gain.setValueAtTime(.045,t);g.gain.exponentialRampToValueAtTime(.001,t+.17);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+.18);}
 function imageRect(){const iw=frameCanvas.width||640,ih=frameCanvas.height||480;const height=H-106;const s=Math.min(W/iw,height/ih);return {x:(W-iw*s)/2,y:0,w:iw*s,h:ih*s};}
 function screenPoint(p){const r=imageRect();return {x:(r.x+(1-p.x)*r.w)/W,y:(r.y+p.y*r.h)/H};}
-function stopMedia(){epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
-function home(){$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
+function stopMedia(){music?.update(false);epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
+function home(){music?.update(false);$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
 function fail(message){lastError=message;home();status(message,true);updateDiagnostics();}
 function baseSession(type){if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';return epoch;}
 function ready(){phase='ready';readyClock=0;$('ready-bar').hidden=false;$('pause').hidden=true;status('');if(source==='demo'){$('ready-title').textContent='Your pointer is a magic hand';$('ready-description').textContent=GAMES[selectedGame].description+' The round starts automatically in 3 seconds.';}else{$('ready-title').textContent='Find your hands';$('ready-description').textContent=(sessionConfig.players===1?'Solo play: keep your head and hands in view.':'Play together: stand side by side. One shared score.');}$('start-round').disabled=source!=='demo';spawnClock=0;}
@@ -136,7 +152,7 @@ async function requestFrame(now){
 function startRound(){swipeTrails.clear();popRings=[];hazardClock=0;caughtPets=[];round=new Round(mode);phase='playing';targets=[];particles=[];labels=[];slices=[];spawnClock=1;spawnCount=1;readyClock=0;manualPause=false;previousActive=false;mousePrev=null;$('ready-bar').hidden=true;$('results').hidden=true;$('pause').hidden=false;$('pause').textContent='Pause';status('');canvas.focus();}
 $('start-round').onclick=startRound;$('again').onclick=startRound;
 $('stop').onclick=home;$('finish').onclick=home;
-$('pause').onclick=()=>{manualPause=!manualPause;mousePrev=null;hands.forEach(h=>h.prev=null);$('pause').textContent=manualPause?'Resume':'Pause';};
+$('pause').onclick=()=>{manualPause=!manualPause;if(manualPause)music?.update(false);mousePrev=null;hands.forEach(h=>h.prev=null);$('pause').textContent=manualPause?'Resume':'Pause';};
 function pointerPosition(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/W,y:(e.clientY-r.top)/H};}
 canvas.onpointerdown=e=>{if(source!=='demo')return;e.preventDefault();const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}canvas.setPointerCapture?.(e.pointerId);fingers.set(e.pointerId,{...point,id:'finger:'+e.pointerId,direct:true,time:performance.now(),prev:null});};
 canvas.onpointermove=e=>{if(source!=='demo')return;const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}const old=fingers.get(e.pointerId);if(old){e.preventDefault();fingers.set(e.pointerId,{...old,...point,time:performance.now(),prev:old.prev||{x:old.x,y:old.y,time:old.time}});}};
@@ -145,7 +161,7 @@ canvas.onpointercancel=e=>fingers.delete(e.pointerId);
 canvas.onlostpointercapture=e=>{const f=fingers.get(e.pointerId);if(f&&!f.released)fingers.delete(e.pointerId);};
 canvas.onpointerleave=e=>{if(e.pointerType==='mouse'){pointer.active=false;mousePrev=null;}};
 canvas.onkeydown=e=>{if(source!=='demo')return;const d={ArrowLeft:[-.025,0],ArrowRight:[.025,0],ArrowUp:[0,-.025],ArrowDown:[0,.025]}[e.key];if(d){e.preventDefault();pointer.x=clamp(pointer.x+d[0],0,1);pointer.y=clamp(pointer.y+d[1],0,.8);pointer.active=true;}};
-document.addEventListener('visibilitychange',()=>{mousePrev=null;hands=[];if(document.hidden){fingers.clear();stream?.getVideoTracks().forEach(t=>t.enabled=false);video.pause();}else{stream?.getVideoTracks().forEach(t=>t.enabled=true);if(source==='camera'||source==='video')video.play().catch(()=>fail('Video paused. Reopen the camera or video.'));}});
+document.addEventListener('visibilitychange',()=>{mousePrev=null;hands=[];if(document.hidden){music?.update(false);fingers.clear();stream?.getVideoTracks().forEach(t=>t.enabled=false);video.pause();}else{stream?.getVideoTracks().forEach(t=>t.enabled=true);if(source==='camera'||source==='video')video.play().catch(()=>fail('Video paused. Reopen the camera or video.'));}});
 window.addEventListener('pagehide',stopMedia);
 
 function playerZone(index){
@@ -182,7 +198,7 @@ function spawn(now,practice=false){
 }
 function burst(t,points){const x=t.x*W,y=t.y*H;if(selectedGame==='bubbles')popRings.push({x,y,r:t.r*H,life:0,color:t.color});for(let i=0;i<(reduceMotion?5:selectedGame==='bubbles'?32:15);i++){const a=Math.random()*Math.PI*2,s=selectedGame==='bubbles'?80+Math.random()*160:25+Math.random()*100;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:0,ttl:.5+Math.random()*.4,color:t.type==='star'?'#d5a141':t.color,r:2+Math.random()*4});}if(t.type==='fruit')for(const side of [-1,1])slices.push({x,y,vx:(t.cut?.nx??1)*side*85,vy:(t.cut?.ny??0)*side*85-25,life:0,fruit:t.fruit,r:t.r*H,side,angle:t.cut?.angle??Math.PI/2,offset:t.cut?.offset??0});if(points)labels.push({x,y,text:`+${points}`,life:0});tone(t.type==='star',t.type==='cactus');}
 function updateRewards(){document.querySelectorAll('[data-reward]').forEach(el=>{const n=Number(el.dataset.reward),earned=totalPops>=n;el.classList.toggle('earned',earned);el.querySelector('progress').value=Math.min(totalPops,n);el.querySelector('small').textContent=earned?'Unlocked together':`${Math.min(totalPops,n)} / ${n} catches`;});const next=REWARDS.find(r=>r.at>totalPops);$('reward-caption').textContent=next?`${next.name}: ${Math.min(totalPops,next.at)} / ${next.at} collected together`:'Your magic wardrobe is complete!';}
-function endRound(){phase='ended';$('pause').hidden=true;$('results').hidden=false;$('final-score').textContent=round.score.toLocaleString();$('final-pops').textContent=round.pops;$('final-rewards').textContent=rewardLevel(totalPops)?`${rewardLevel(totalPops)} dress-up reward${rewardLevel(totalPops)>1?'s':''} ready for the next round.`:'A few more pops next time unlock sparkle bracelets.';status('');}
+function endRound(){music?.update(false);phase='ended';$('pause').hidden=true;$('results').hidden=false;$('final-score').textContent=round.score.toLocaleString();$('final-pops').textContent=round.pops;$('final-rewards').textContent=rewardLevel(totalPops)?`${rewardLevel(totalPops)} dress-up reward${rewardLevel(totalPops)>1?'s':''} ready for the next round.`:'A few more pops next time unlock sparkle bracelets.';status('');}
 function step(dt,now){
   if(source==='demo'){
     hands=pointer.active?[{...pointer,id:'mouse',direct:true,r:mode==='gentle'?.026:.019,confidence:1,seen:now,prev:mousePrev}]:[];
@@ -194,7 +210,7 @@ function step(dt,now){
   const present=source==='demo'||controls.length>0;
   const active=present&&!manualPause&&!document.hidden&&!$('settings').open;
   if(active&&!previousActive){recoveryUntil=now+1000;hands.forEach(h=>{if(!h.direct)h.prev=null;});}
-  previousActive=active;
+  previousActive=active;music?.update(sound&&active&&phase==='playing',selectedGame);
   if(phase==='ready'){
     readyClock=active?readyClock+dt:0;
     $('ready-title').textContent=active?'Starting in '+Math.max(1,Math.ceil(3-readyClock))+'…':'Show your hands to start';

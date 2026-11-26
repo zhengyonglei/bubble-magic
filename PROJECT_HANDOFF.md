@@ -35,3 +35,5 @@ Play Garden is the suite name; existing repository and Pages URL are unchanged. 
 
 ## Version 0.6.0
 Visible Solo/Together controls, shared score, AI knife/basket wrist props, varied bubble hitboxes, swipe-aligned fruit cuts, and clearer rewards at 5/15/30 catches. Preview rewards does not grant progress. Solo defaults on page load. Test props and directional slicing with real webcam; code and mouse tests do not establish live tracking feel.
+
+Latest: 0.10.0 adds original Web Audio melodies (`music.js`), visible fullscreen controls with expanded-view fallback, and expanded regression coverage plus `.github/workflows/tests.yml`. Music is opt-in and muted outside active rounds.

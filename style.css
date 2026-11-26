@@ -26,3 +26,10 @@
 @media(max-width:850px){#stage.in-session{min-height:0;height:calc(100svh - 72px)}.in-session .hud{top:12px;left:8px;right:8px}.in-session .score-panel{padding:8px 12px;min-width:100px}.in-session .score-panel strong{font-size:34px}.in-session .score-panel .eyebrow{font-size:9px}.in-session .round-panel{max-width:48%;padding:8px}.in-session .session-rules{font-size:10px}.in-session .ready-bar{bottom:145px}.in-session .ready-bar span{font-size:11px}.in-session .reward-rail{height:85px}.in-session .play-controls{bottom:92px}.in-session canvas{touch-action:none;user-select:none;-webkit-user-select:none}.in-session .reward-label{display:none}}
 
 @media(max-width:850px){.in-session .hud{align-items:flex-start}.in-session #source-badge{display:none}.in-session .score-panel{gap:3px}.in-session .round-panel{font-size:11px}.in-session .reward-rail{gap:5px;padding:10px 8px}.in-session .reward{flex:1;min-width:0;gap:3px}.in-session .reward>div{flex:1;min-width:0}.in-session .reward progress{width:100%}.in-session .reward b{font-size:9px}.in-session .reward-icon.atlas-icon{width:26px;height:26px}}
+
+/* Keep controls reachable and fit the TV/browser viewport without scrolling. */
+html:fullscreen,html.expanded-play{overflow:hidden}
+:fullscreen .topbar,.expanded-play .topbar{height:64px}
+:fullscreen #stage,.expanded-play #stage,:fullscreen #stage.in-session,.expanded-play #stage.in-session{height:calc(100svh - 64px);min-height:0}
+#fullscreen span,#sound span{display:inline;font-size:12px}
+@media(max-width:600px){.top-note{display:none}.topbar{padding:0 8px;gap:6px}#fullscreen span,#sound span{font-size:10px}.icon-btn{padding:6px}.brand{max-width:100px}}

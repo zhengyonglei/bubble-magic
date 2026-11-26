@@ -60,3 +60,7 @@ Trajectory tests cover center-directed side launches and complete off-screen spr
 
 ## 0.9.2 — Bubble Magic rendering regression
 Restored butterfly renderer accidentally removed in 0.9.0. Added production draw tests for active hands in all three games with loaded and fallback artwork. Test reproduced `ReferenceError: butterfly is not defined` before the fix.
+
+## 0.10.0 — Rendering, fullscreen and music coverage
+Added complete-round draw checks across all games, difficulty levels and loaded/fallback artwork; camera-pose reward rendering; fullscreen enter/exit/fallback/Escape; audio initialization failures; opt-in music, pause, hidden-tab and end-round muting; bounded music scheduling after suspension. GitHub Actions runs syntax checks and all tests on pushes and pull requests.
+Browser smoke test: fullscreen layout, active butterfly input and scoring, music on/off, pause and fullscreen exit; no console errors. Audio scheduling is tested with an AudioContext test double; actual speaker sound and HDMI hardware were not verified.

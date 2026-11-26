@@ -1,8 +1,14 @@
 {
   "name": "bubble-magic",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node scripts/serve.mjs", "test": "node --test tests/*.test.mjs", "check": "node --check app.js && node --check vision-worker.js && node --check game-core.js" },
-  "engines": { "node": ">=18" }
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check app.js && node --check vision-worker.js && node --check game-core.js && node --check game-modes.js && node --check music.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

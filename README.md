@@ -101,3 +101,8 @@ Version 0.8.0: Bubble Magic uses one obstacle-free Bubble party mode (no difficu
 Version 0.9.0: Fruit Slice replaces the toy knife with a violet-and-white glowing motion trail for each hand/finger. Fruit launches from below the screen toward the center, reaches an apex, and falls under gravity. Easy/Medium/Hard control toss speed as well as spawn rate. On a phone select Play with mouse or touch and swipe through the fruit; stationary taps do not slice. Quick finger swipes are retained between frames, while camera tracking jumps remain rejected.
 
 Version 0.9.1: fruit launches fully outside the left/right edges at a lower-middle height and arcs inward. Newly tossed objects cannot be hit during their first quarter-second or while their collision circle still crosses a side edge. Side margins scale with the screen aspect ratio, including portrait phones.
+
+### Fullscreen and music (0.10.0)
+Use **Fullscreen** in the top bar for TV play; use **Exit fullscreen** or Escape to return. Unsupported browsers get an expanded play area. Tap **Music off** to enable original gentle background melodies and game sounds. Music plays during active rounds and stops on pause, hidden tabs, menus and round end.
+
+Regression checks run with `npm test` and `npm run check`, and automatically on GitHub pushes and pull requests.
