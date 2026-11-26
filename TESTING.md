@@ -73,3 +73,6 @@ Tree roots now sit at the garden ground line with a contact shadow. Shaking pivo
 
 ## 0.11.2 — Full-area camera
 Camera video/cutout and pose coordinates share full-canvas bounds for all games. Preserve both camera edges without a centered letterbox or reserved bottom strip. Request a widescreen camera stream when available; inference remains downscaled. Regression coverage includes mirrored camera edges and center on TV, desktop and portrait layouts.
+
+## 0.11.3 — Music on game start
+Background music defaults on for all games. Audio is unlocked by the Play action, with mute preserved between games in the current page. Regression tests cover each game’s melody activation, camera/video audio setup, mute across sessions, and existing pause/visibility/error behavior.

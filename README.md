@@ -110,3 +110,6 @@ Regression checks run with `npm test` and `npm run check`, and automatically on 
 ### Jump & catch tree (0.11.0)
 Cats & Dogs Catch now grows treasures with jumps. Each player has a separate net between their wrists; either player can jump or catch. First jumps gradually reveal cats, dogs, apples and oranges in the branches. Repeated jumps release mature treasures. Any contact with the net catches them, awards shared points, and shows them settling before fading. Solo and Together are supported.
 Mouse: move the pointer for a net; use Jump! or Space to simulate jumping. Touch: one finger moves the net, two fingers set its endpoints; tap Jump! to advance the tree. Camera jump detection uses torso rise and landing, so keep shoulders and hips visible.
+
+### Automatic music (0.11.3)
+Background music now starts when you begin any game. Use Music on to mute; your mute choice remains in effect across games until you reload or turn music back on. Music pauses with gameplay and hidden tabs.

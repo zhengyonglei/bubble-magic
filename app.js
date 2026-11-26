@@ -1,13 +1,13 @@
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.11.2';
-import {GardenMusic} from './music.js?v=0.11.2';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.11.2';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.11.2';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.11.3';
+import {GardenMusic} from './music.js?v=0.11.3';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.11.3';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.11.3';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.11.2';
+const BUILD='0.11.3';
 const art={};for(const [name,file] of Object.entries({tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -23,7 +23,7 @@ let nextPlayerId=1,targets=[],particles=[],labels=[],targetId=0,spawnClock=0,spa
 let readyClock=0,hazardClock=0,caughtPets=[],popRings=[];const fingers=new Map();
 let slices=[],previewRewards=false;const swipeTrails=new Map();
 let totalPops=0,manualPause=false,recoveryUntil=0,previousActive=false;
-let pointer={x:.74,y:.5,active:false},mousePrev=null,sound=false,audio=null,music=null,lastTone=0;
+let pointer={x:.74,y:.5,active:false},mousePrev=null,sound=true,audio=null,music=null,lastTone=0;
 let lastTick=performance.now(),fpsSince=lastTick,toastTimer=null,trailClock=0;
 let config={players:2,cutout:true,quality:'balanced',hazards:false,height:'auto'};
 let sessionConfig={...config};
@@ -50,9 +50,13 @@ function soundLabel(){ $('sound').innerHTML=`♫ <span>Music ${sound?'on':'off'}
 $('sound').onclick=async()=>{
   sound=!sound;soundLabel();
   if(!sound){music?.update(false);return;}
-  try{audio??=new (window.AudioContext||window.webkitAudioContext)();music??=new GardenMusic(audio);await audio.resume();}
-  catch{sound=false;soundLabel();toast('Audio could not start. Tap Music to try again.');}
+  await enableAudio();
 };
+async function enableAudio(){
+  if(!sound)return;
+  try{audio??=new (window.AudioContext||window.webkitAudioContext)();music??=new GardenMusic(audio);await audio.resume();}
+  catch{sound=false;music?.update(false);soundLabel();toast('Audio could not start. Tap Music to try again.');}
+}
 let expanded=false;
 function fullscreenLabel(){const on=!!document.fullscreenElement||expanded;$('fullscreen').innerHTML=`⛶ <span>${on?'Exit fullscreen':'Fullscreen'}</span>`;$('fullscreen').setAttribute('aria-label',on?'Exit fullscreen':'Enter fullscreen');$('fullscreen').setAttribute('aria-pressed',String(on));resize();}
 $('fullscreen').onclick=async()=>{
@@ -71,7 +75,7 @@ function screenPoint(p){const r=imageRect();return {x:(r.x+(1-p.x)*r.w)/W,y:(r.y
 function stopMedia(){music?.update(false);epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
 function home(){shakePending=false;music?.update(false);$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
 function fail(message){lastError=message;home();status(message,true);updateDiagnostics();}
-function baseSession(type){jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';return epoch;}
+function baseSession(type){jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
 function ready(){phase='ready';readyClock=0;$('ready-bar').hidden=false;$('pause').hidden=true;status('');if(source==='demo'){$('ready-title').textContent='Your pointer is a magic hand';$('ready-description').textContent=GAMES[selectedGame].description+' The round starts automatically in 3 seconds.';}else{$('ready-title').textContent='Find your hands';$('ready-description').textContent=(sessionConfig.players===1?'Solo play: keep your head and hands in view.':'Play together: stand side by side. One shared score.');}$('start-round').disabled=source!=='demo';spawnClock=0;}
 function launchWorker(token){
   worker=new Worker(new URL('./vision-worker.js',import.meta.url));
@@ -156,7 +160,7 @@ function startRound(){jumpTracker=new JumpTracker();treeItems=[];shakeCooldown=0
 $('shake-tree').onclick=()=>{if(source==='demo'&&selectedGame==='pets'&&phase==='playing'&&!manualPause)shakePending=true;};
 $('start-round').onclick=startRound;$('again').onclick=startRound;
 $('stop').onclick=home;$('finish').onclick=home;
-$('pause').onclick=()=>{manualPause=!manualPause;if(manualPause)music?.update(false);mousePrev=null;hands.forEach(h=>h.prev=null);$('pause').textContent=manualPause?'Resume':'Pause';};
+$('pause').onclick=()=>{manualPause=!manualPause;if(manualPause)music?.update(false);else void enableAudio();mousePrev=null;hands.forEach(h=>h.prev=null);$('pause').textContent=manualPause?'Resume':'Pause';};
 function pointerPosition(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/W,y:(e.clientY-r.top)/H};}
 canvas.onpointerdown=e=>{if(source!=='demo')return;e.preventDefault();const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}canvas.setPointerCapture?.(e.pointerId);fingers.set(e.pointerId,{...point,id:'finger:'+e.pointerId,direct:true,time:performance.now(),prev:null});};
 canvas.onpointermove=e=>{if(source!=='demo')return;const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}const old=fingers.get(e.pointerId);if(old){e.preventDefault();fingers.set(e.pointerId,{...old,...point,time:performance.now(),prev:old.prev||{x:old.x,y:old.y,time:old.time}});}};

@@ -41,3 +41,5 @@ Latest: 0.10.0 adds original Web Audio melodies (`music.js`), visible fullscreen
 Latest: 0.11.0 replaces pet baskets with separate hand-to-hand nets for every player. JumpTracker in tree-game.js detects torso rise/landing; either player advances shared tree growth. Four jumps from an empty tree release the first two treasures. Branch items ease toward growth/opacity targets; only further jumps release mature items. Cats, dogs, apples and oranges score shared points; no pet-game cacti. Demo Jump! button or Space simulates a jump.
 
 0.11.2: tree roots grounded at 83% stage height; branch positions adjusted. Camera imageRect now covers the whole stage with no crop. Native camera aspect ratio may be stretched to match stage; video and pose coordinates stay aligned. Camera requests ideal 1280x720 and stage aspect ratio; inference stays at 640px (480px light).
+
+0.11.3: sound defaults on; baseSession unlocks AudioContext from the Play gesture. Existing Music button mutes music and effects for all subsequent games until toggled back on. No audio plays on initial page load.

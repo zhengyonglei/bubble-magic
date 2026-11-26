@@ -76,8 +76,8 @@ test('fullscreen enters, exits, and falls back to expanded view with Escape',asy
  await g.nodes.get('fullscreen').onclick();assert.equal(g.run('expanded'),true);
  g.events.keydown({key:'Escape'});assert.equal(g.run('expanded'),false);
 });
-test('music is opt-in and silences for pause, hidden tab, settings and end of round',()=>{
- const g=game();g.run("baseSession('demo');startRound();music={update(on){this.on=on;}};step(.016,100);");assert.equal(g.run('music.on'),false);
+test('muted music stays off and enabled music silences on pause, hidden tab, settings and round end',()=>{
+ const g=game();g.run("sound=false;baseSession('demo');startRound();music={update(on){this.on=on;}};audio={resume:async()=>{}};step(.016,100);");assert.equal(g.run('music.on'),false);
  g.run('sound=true;step(.016,116)');assert.equal(g.run('music.on'),true);
  g.nodes.get('pause').onclick();assert.equal(g.run('music.on'),false);
  g.nodes.get('pause').onclick();g.run('step(.016,132)');assert.equal(g.run('music.on'),true);
@@ -86,7 +86,7 @@ test('music is opt-in and silences for pause, hidden tab, settings and end of ro
  g.nodes.get('settings').open=false;g.run('step(.016,180);endRound()');assert.equal(g.run('music.on'),false);
 });
 test('audio initialization failures restore the off control without throwing',async()=>{
- const g=game();g.sandbox.window.AudioContext=class{constructor(){throw Error('no audio');}};
+ const g=game();g.sandbox.window.AudioContext=class{constructor(){throw Error('no audio');}};g.run('sound=false');
  await g.nodes.get('sound').onclick();assert.equal(g.run('sound'),false);
 });
 
@@ -116,5 +116,25 @@ test('all games map the complete camera frame to the full play area at every asp
  const g=game();g.run("selectedGame='"+type+"';W="+width+";H="+height+";frameCanvas.width=640;frameCanvas.height=480;");
  assert.equal(g.run('imageRect().w'),width);assert.equal(g.run('imageRect().h'),height);assert.equal(g.run('imageRect().x'),0);assert.equal(g.run('imageRect().y'),0);
  assert.equal(g.run('screenPoint({x:0,y:0}).x'),1);assert.equal(g.run('screenPoint({x:1,y:1}).x'),0);assert.equal(g.run('screenPoint({x:1,y:1}).y'),1);assert.equal(g.run('screenPoint({x:.5,y:.5}).x'),.5);
+ }
+});
+
+
+test('starting any game enables its background music without a separate sound click',()=>{
+ for(const type of ['bubbles','fruit','pets']){
+  const g=game();let resumes=0;
+  g.sandbox.window.AudioContext=class{state='running';resume(){resumes++;return Promise.resolve();}};
+  g.sandbox.GardenMusic=class{update(on,game){this.on=on;this.game=game;}};
+  assert.equal(g.run('sound'),true);
+  g.run("selectedGame='"+type+"';baseSession('demo');startRound();step(.016,100);");
+  assert.equal(resumes,1);assert.equal(g.run('music.on'),true);assert.equal(g.run('music.game'),type);
+  g.nodes.get('sound').onclick();assert.equal(g.run('music.on'),false);
+  g.run("baseSession('demo');startRound();step(.016,116)");assert.equal(g.run('music.on'),false);assert.equal(resumes,1);
+ }
+});
+test('camera and video session starts also unlock audio',()=>{
+ for(const source of ['camera','video']){const g=game();let resumes=0;
+ g.sandbox.window.AudioContext=class{resume(){resumes++;return Promise.resolve();}};g.sandbox.GardenMusic=class{update(){}};
+ g.run("baseSession('"+source+"')");assert.equal(resumes,1);assert.equal(g.run('sound'),true);
  }
 });
