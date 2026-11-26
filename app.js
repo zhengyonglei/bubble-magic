@@ -1,4 +1,4 @@
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.2.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
