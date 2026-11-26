@@ -41,7 +41,7 @@ test('treasures appear gradually and only repeated jumps release mature items',(
  let s={items:[],index:0};
  for(let i=0;i<3;i++){s=advanceTree(s.items,s.index,'easy',5,()=>.5);assert.equal(s.falling.length,0);}
  assert.ok(s.items[0].growth>s.items.at(-1).growth);
- s=advanceTree(s.items,s.index,'easy',5,()=>.5);assert.equal(s.falling.length,2);
- assert.deepEqual(new Set([...s.items,...s.falling].map(i=>i.type)),new Set(['cat','apple','dog','orange']));
- for(let i=0;i<50;i++){s=advanceTree(s.items,s.index,'easy',0);assert.equal(s.falling.length,0);assert.ok(s.items.length<=10);}
+ s=advanceTree(s.items,s.index,'easy',5,()=>.5);assert.equal(s.falling.length,4);
+ assert.deepEqual(new Set([...s.items,...s.falling].map(i=>i.type)),new Set(['cat','apple','dog','orange','squirrel','pear','peach','cherries']));
+ for(let i=0;i<50;i++){s=advanceTree(s.items,s.index,'easy',0);assert.equal(s.falling.length,0);assert.ok(s.items.length<=18);}
 });

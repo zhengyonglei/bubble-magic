@@ -76,3 +76,6 @@ Camera video/cutout and pose coordinates share full-canvas bounds for all games.
 
 ## 0.11.3 — Music on game start
 Background music defaults on for all games. Audio is unlocked by the Play action, with mute preserved between games in the current page. Regression tests cover each game’s melody activation, camera/video audio setup, mute across sessions, and existing pause/visibility/error behavior.
+
+## 0.12.0 — Treasure variety and woven net
+Added coverage for fixed tree-party settings, larger batches, mixed treasure types and no hazards after switching from Hard Fruit Slice. Existing draw tests cover new sprites with loaded and fallback art, net rendering and complete rounds.

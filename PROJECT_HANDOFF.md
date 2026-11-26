@@ -43,3 +43,5 @@ Latest: 0.11.0 replaces pet baskets with separate hand-to-hand nets for every pl
 0.11.2: tree roots grounded at 83% stage height; branch positions adjusted. Camera imageRect now covers the whole stage with no crop. Native camera aspect ratio may be stretched to match stage; video and pose coordinates stay aligned. Camera requests ideal 1280x720 and stage aspect ratio; inference stays at 640px (480px light).
 
 0.11.3: sound defaults on; baseSession unlocks AudioContext from the Play gesture. Existing Music button mutes music and effects for all subsequent games until toggled back on. No audio plays on initial page load.
+
+0.12.0: pets forces Easy/gentle internally and hides difficulty/hazard controls. Fixed max 14 falling; 4 new branch items per jump; 18 branch-item cap. New 2x2 tree-treasures-ai-v1.png cells: squirrel, pear, peach, cherries. treasureArt renders new sheet throughout growth/drop/catch. Woven net uses the same sag polygon for rendering and collisions.

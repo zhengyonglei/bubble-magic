@@ -1,19 +1,19 @@
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.11.3';
-import {GardenMusic} from './music.js?v=0.11.3';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.11.3';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.11.3';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.12.0';
+import {GardenMusic} from './music.js?v=0.12.0';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.12.0';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.11.3';
-const art={};for(const [name,file] of Object.entries({tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
+const BUILD='0.12.0';
+const art={};for(const [name,file] of Object.entries({treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
 const artReady=name=>art[name].complete&&art[name].naturalWidth>0;
 let selectedGame='bubbles',difficulty='easy';
-const level=()=>selectedGame==='bubbles'?{label:'Bubble party',interval:.28,max:20,speed:.04,drift:.035,radius:.043}:LEVELS[difficulty];
+const level=()=>selectedGame==='bubbles'?{label:'Bubble party',interval:.28,max:20,speed:.04,drift:.035,radius:.043}:selectedGame==='pets'?{label:'Treasure party',interval:.6,max:14,speed:.11,drift:.02,radius:.05}:LEVELS[difficulty];
 let W=1280,H=720,source='none',phase='home',mode='gentle',round=null;
 let worker=null,workerReady=false,busy=false,stream=null,objectURL=null,sample=null,epoch=0;
 let players=[],hands=[],lastResult=0,lastInference=0,lastVideoTime=-1,frameCount=0,renderFrames=0;
@@ -36,7 +36,7 @@ function status(text,error=false){$('status').textContent=text;$('status').hidde
 function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,2800);}
 function setMode(value){difficulty=value;mode=value==='easy'?'gentle':'challenge';config.hazards=selectedGame==='fruit'&&value!=='easy';$('hazards').checked=config.hazards;$('hazards').disabled=value==='easy'||selectedGame==='pets';$('level-note').textContent=value==='easy'?'Easy: no cacti. Try Medium or Hard for obstacles.':'Cacti appear during scored rounds, even with one player.';document.querySelectorAll('[data-mode]').forEach(button=>{const selected=button.dataset.mode===value;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});}
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>setMode(button.dataset.mode));
-function chooseGame(id){selectedGame=id;document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode(difficulty);}if(id==='bubbles')setMode('easy');document.querySelector('.mode-picker').hidden=id==='bubbles';$('level-note').hidden=id==='bubbles'||id==='pets';$('demo').textContent='Play with mouse or touch';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
+function chooseGame(id){selectedGame=id;$('hazard-setting').hidden=id!=='fruit';document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode('easy');}if(id==='bubbles')setMode('easy');document.querySelector('.mode-picker').hidden=id!=='fruit';$('level-note').hidden=id==='bubbles'||id==='pets';$('demo').textContent='Play with mouse or touch';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
 function mainMenu(){home();document.querySelector('.sky-label').textContent='PLAY GARDEN';$('welcome').hidden=true;$('suite-menu').hidden=false;}
 document.querySelectorAll('[data-game]').forEach(button=>button.onclick=()=>chooseGame(button.dataset.game));$('all-games').onclick=mainMenu;$('choose-game').onclick=mainMenu;
 function setPlayers(n){config.players=Number(n);$('players').value=String(n);document.querySelectorAll('[data-players]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.players)===config.players)));}
@@ -75,7 +75,7 @@ function screenPoint(p){const r=imageRect();return {x:(r.x+(1-p.x)*r.w)/W,y:(r.y
 function stopMedia(){music?.update(false);epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
 function home(){shakePending=false;music?.update(false);$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
 function fail(message){lastError=message;home();status(message,true);updateDiagnostics();}
-function baseSession(type){jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
+function baseSession(type){jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){setMode('easy');config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
 function ready(){phase='ready';readyClock=0;$('ready-bar').hidden=false;$('pause').hidden=true;status('');if(source==='demo'){$('ready-title').textContent='Your pointer is a magic hand';$('ready-description').textContent=GAMES[selectedGame].description+' The round starts automatically in 3 seconds.';}else{$('ready-title').textContent='Find your hands';$('ready-description').textContent=(sessionConfig.players===1?'Solo play: keep your head and hands in view.':'Play together: stand side by side. One shared score.');}$('start-round').disabled=source!=='demo';spawnClock=0;}
 function launchWorker(token){
   worker=new Worker(new URL('./vision-worker.js',import.meta.url));
@@ -363,7 +363,7 @@ function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phas
   visiblePlayers.forEach(p=>wearables(p,true,t));
   if(source!=='demo'&&lastResult&&now-lastResult<600){const r=imageRect();ctx.save();ctx.translate(r.x+r.w,r.y);ctx.scale(-1,1);ctx.globalAlpha=phase==='ended'?.35:1;ctx.drawImage(frameCanvas,0,0,r.w,r.h);ctx.restore();}
   visiblePlayers.forEach(p=>wearables(p,false,t));
-  for(const target of targets){const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit')fruitArt(x,y,r,target.fruit);else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));}
+  for(const target of targets){const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit')fruitArt(x,y,r,target.fruit);else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));}
   for(const s of slices){ctx.save();ctx.globalAlpha=1-s.life/.65;ctx.translate(s.x,s.y);ctx.rotate(s.angle);ctx.beginPath();ctx.rect(-s.r*1.5,s.side<0?-s.r*1.5:s.offset,s.r*3,s.side<0?s.r*1.5+s.offset:s.r*1.5-s.offset);ctx.clip();ctx.rotate(-s.angle);fruitArt(0,0,s.r,s.fruit);ctx.restore();}
   for(const pop of popRings){ctx.save();ctx.globalAlpha=1-pop.life/.65;const radius=pop.r*(1+pop.life*(reduceMotion?.35:1.8));ctx.lineWidth=3*(1-pop.life/.65)+1;ctx.strokeStyle='#fff9e9';ctx.beginPath();ctx.arc(pop.x,pop.y,radius,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=pop.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(pop.x,pop.y,radius*1.16,0,Math.PI*2);ctx.stroke();for(let i=0;i<8;i++){const a=i*Math.PI/4;star(pop.x+Math.cos(a)*radius,pop.y+Math.sin(a)*radius,5*(1-pop.life/.65),'#fff3ab',a+pop.life);}ctx.restore();}
   for(const [i,p] of particles.entries()){ctx.globalAlpha=1-p.life/p.ttl;if(i%4===0&&artReady('atlas'))sprite('sparkles',p.x,p.y,p.r*5);else ellipse(p.x,p.y,p.r,p.r,p.color);}ctx.globalAlpha=1;
@@ -373,7 +373,7 @@ function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phas
     for(const net of treeNets)drawNet(net);
     for(const pet of caughtPets){const points=netPoints(pet.net,W,H),mid=points[6],ease=Math.min(1,pet.life/.4);
       const x=pet.x*W*(1-ease)+mid.x*ease,y=pet.y*H*(1-ease)+(mid.y-pet.r*H*.3)*ease;
-      ctx.save();ctx.globalAlpha=Math.min(1,(2.4-pet.life)/.6);if(pet.type==='cat'||pet.type==='dog')petArt(x,y,pet.r*H,pet.type);else fruitArt(x,y,pet.r*H,pet.fruit);ctx.restore();
+      ctx.save();ctx.globalAlpha=Math.min(1,(2.4-pet.life)/.6);treasureArt(x,y,pet.r*H,pet);ctx.restore();
     }
   }else hands.forEach((h,i)=>handProp(h,t,i));
   if(previewRewards){ctx.font='600 13px sans-serif';ctx.fillStyle='#644c85';ctx.textAlign='center';ctx.fillText('REWARD PREVIEW · score unchanged',W/2,35);ctx.textAlign='left';}
@@ -391,13 +391,30 @@ function drawTree(t){
  ctx.save();ctx.translate(W*.5,H*.83);ctx.rotate(wobble);
  if(artReady('tree'))ctx.drawImage(art.tree,-W*.33,-H*.80,W*.66,H*.80);
  else{ctx.strokeStyle='#b18a62';ctx.lineWidth=Math.max(15,W*.028);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-H*.48);ctx.stroke();for(let i=0;i<5;i++)ellipse((i-2)*W*.095,-H*(.48+(i%2)*.12),W*.13,H*.15,['#a4dbad','#bce6b4','#85cfa7'][i%3]);}
- for(const item of treeItems){const size=item.r*H*(.35+item.shown*.65);ctx.save();ctx.globalAlpha=.25+item.shown*.75;const x=(item.x-.5)*W,y=item.y*H-H*.83;if(item.type==='cat'||item.type==='dog')petArt(x,y,size,item.type);else fruitArt(x,y,size,item.fruit);ctx.restore();}
+ for(const item of treeItems){const size=item.r*H*(.35+item.shown*.65);ctx.save();ctx.globalAlpha=.25+item.shown*.75;const x=(item.x-.5)*W,y=item.y*H-H*.83;treasureArt(x,y,size,item);ctx.restore();}
  ctx.restore();ctx.save();ctx.font='700 '+Math.max(12,Math.min(21,W*.019))+'px sans-serif';ctx.textAlign='center';ctx.fillStyle='#345c47';ctx.fillText(source==='demo'?'Tap Jump! to grow, then drop':'JUMP to grow, then drop!',W*.5,H*.70);ctx.fillText('EVERYONE: spread hands to catch',W*.5,H*.75);ctx.restore();
 }
+function treasureArt(x,y,r,item){
+ const cellIndex={squirrel:0,pear:1,peach:2,cherries:3}[item.type];
+ if(cellIndex!==undefined){
+  if(artReady('treasures')){const cell=art.treasures.naturalWidth/2;ctx.drawImage(art.treasures,(cellIndex%2)*cell,Math.floor(cellIndex/2)*cell,cell,cell,x-r*1.35,y-r*1.35,r*2.7,r*2.7);}
+  else{ctx.save();ctx.font=r*1.7+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText({squirrel:'🐿️',pear:'🍐',peach:'🍑',cherries:'🍒'}[item.type],x,y);ctx.restore();}
+ }else if(item.type==='cat'||item.type==='dog')petArt(x,y,r,item.type);else fruitArt(x,y,r,item.fruit);
+}
 function drawNet(net){
- const points=netPoints(net,W,H),a=points[0],b=points.at(-1);
- ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);for(const p of points)ctx.lineTo(p.x,p.y);ctx.closePath();ctx.fillStyle='#d4f8f480';ctx.fill();ctx.strokeStyle='#6eaaa7';ctx.lineWidth=2;ctx.stroke();
- for(let i=1;i<12;i++){const f=i/12,p=points[i];ctx.beginPath();ctx.moveTo(a.x+(b.x-a.x)*f,a.y+(b.y-a.y)*f);ctx.lineTo(p.x,p.y);ctx.stroke();}
- for(const fraction of [.3,.6,.85]){ctx.beginPath();for(let i=0;i<points.length;i++){const f=i/12,x=points[i].x,y=(a.y+(b.y-a.y)*f)*(1-fraction)+points[i].y*fraction;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
- ctx.strokeStyle='#f4c369';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();for(const p of [a,b]){ellipse(p.x,p.y,10,10,'#fff1bc');}ctx.restore();
+ const points=netPoints(net,W,H),a=points[0],b=points.at(-1),span=Math.hypot(b.x-a.x,b.y-a.y);
+ const outline=()=>{ctx.beginPath();ctx.moveTo(a.x,a.y);for(const p of points)ctx.lineTo(p.x,p.y);ctx.closePath();};
+ ctx.save();ctx.lineJoin='round';ctx.lineCap='round';outline();
+ const fabric=ctx.createLinearGradient(0,Math.min(a.y,b.y),0,Math.max(...points.map(p=>p.y)));
+ fabric.addColorStop(0,'#fff4ce12');fabric.addColorStop(1,'#cfb88955');ctx.fillStyle=fabric;ctx.fill();
+ ctx.save();ctx.clip();
+ const minX=Math.min(a.x,b.x)-20,maxX=Math.max(a.x,b.x)+20,minY=Math.min(a.y,b.y)-20,maxY=Math.max(...points.map(p=>p.y))+20;
+ const mesh=Math.max(12,Math.min(22,span/14));
+ for(const direction of [-1,1])for(let x=minX-(maxY-minY);x<maxX+(maxY-minY);x+=mesh){
+  ctx.beginPath();ctx.moveTo(x,minY);ctx.lineTo(x+direction*(maxY-minY)*.7,maxY);
+  ctx.strokeStyle='#63534470';ctx.lineWidth=2.6;ctx.stroke();ctx.strokeStyle='#f1dfb7';ctx.lineWidth=1.1;ctx.stroke();
+ }
+ ctx.restore();outline();ctx.strokeStyle='#66503c';ctx.lineWidth=6;ctx.stroke();ctx.strokeStyle='#caa36a';ctx.lineWidth=4;ctx.stroke();ctx.setLineDash([3,5]);ctx.strokeStyle='#ffedbf';ctx.lineWidth=1.6;ctx.stroke();ctx.setLineDash([]);
+ for(const p of [a,b]){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-.25);ctx.shadowColor='#3b2d3940';ctx.shadowBlur=4;ctx.fillStyle='#93633d';ctx.beginPath();ctx.roundRect(-7,-17,14,34,5);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#e5bf88';ctx.lineWidth=2;for(let i=-10;i<=10;i+=5){ctx.beginPath();ctx.moveTo(-5,i);ctx.lineTo(5,i+2);ctx.stroke();}ctx.restore();}
+ ctx.restore();
 }

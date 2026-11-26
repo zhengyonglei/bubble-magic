@@ -26,3 +26,6 @@ Dog prompt: Use case: stylized-concept. Asset type: transparent game sprite. A s
 
 ## tree-ai-v1.png
 AI-generated isolated transparent storybook orchard tree, pastel green canopy and honey-brown branching trunk, matching existing children’s garden assets. Generated with built-in image tool; resized to 640px preserving alpha. Dynamic net mesh and tree growth are canvas-rendered.
+
+## tree-treasures-ai-v1.png
+Built-in AI-generated transparent 2x2 sheet: full-body squirrel, pear, peach, cherries. Soft storybook 3D style, centered cells with clear silhouettes. Resized to 640px with alpha preserved.

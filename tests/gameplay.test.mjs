@@ -93,7 +93,7 @@ test('audio initialization failures restore the off control without throwing',as
 
 test('tree needs repeated jumps before objects fall, then net catches score once',()=>{
  const g=game();g.run("chooseGame('pets');baseSession('demo');startRound();pointer={x:.5,y:.65,active:true};step(.1,100);");assert.equal(g.run('targets.length'),0);
- g.run("$('shake-tree').onclick();step(.1,200)");assert.equal(g.run('treeItems.length'),2);assert.equal(g.run('targets.length'),0);
+ g.run("$('shake-tree').onclick();step(.1,200)");assert.equal(g.run('treeItems.length'),4);assert.equal(g.run('targets.length'),0);
  g.run('for(let i=0;i<3;i++){shakeCooldown=0;shakePending=true;step(.1,300+i*100);}');assert.ok(g.run('targets.length')>0);
  g.run("targets=[{id:999,type:'cat',x:.5,y:.65,r:.05,vy:0,vx:0,gravity:0,treeDrop:true,life:0,ttl:10}];step(.01,700);step(.01,710);");assert.equal(g.run('round.score'),10);assert.equal(g.run('caughtPets.length'),1);
  g.run('draw(710)');
@@ -107,7 +107,7 @@ test('paused and ended tree rounds ignore jump input',()=>{
 
 
 test('camera torso jump advances tree while a stationary player does not',()=>{
- const g=game();g.run("selectedGame='pets';baseSession('camera');startRound();const p=Array.from({length:33},(_,i)=>({x:i%2?.4:.6,y:i>=23?.7:.5,visibility:1}));updatePlayers([p],100);updatePlayers([p],116);step(.016,116);step(.016,132);");assert.equal(g.run('treeItems.length'),0);g.run("const raised=p.map(v=>({...v,y:v.y-.12}));updatePlayers([raised],200);step(.016,200)");assert.equal(g.run('treeItems.length'),2);g.run('step(.016,216)');assert.equal(g.run('treeItems.length'),2);
+ const g=game();g.run("selectedGame='pets';baseSession('camera');startRound();const p=Array.from({length:33},(_,i)=>({x:i%2?.4:.6,y:i>=23?.7:.5,visibility:1}));updatePlayers([p],100);updatePlayers([p],116);step(.016,116);step(.016,132);");assert.equal(g.run('treeItems.length'),0);g.run("const raised=p.map(v=>({...v,y:v.y-.12}));updatePlayers([raised],200);step(.016,200)");assert.equal(g.run('treeItems.length'),4);g.run('step(.016,216)');assert.equal(g.run('treeItems.length'),4);
 });
 
 
@@ -138,3 +138,6 @@ test('camera and video session starts also unlock audio',()=>{
  g.run("baseSession('"+source+"')");assert.equal(resumes,1);assert.equal(g.run('sound'),true);
  }
 });
+
+
+test('tree party has no difficulty or hazards and releases larger mixed batches',()=>{const g=game();g.run("selectedGame='fruit';setMode('hard');chooseGame('pets');baseSession('demo');startRound();pointer={x:.5,y:.8,active:true};for(let i=0;i<8;i++){shakeCooldown=0;shakePending=true;step(.1,100+i*100);draw(100+i*100);}");assert.equal(g.nodes.get('.mode-picker').hidden,true);assert.equal(g.run('difficulty'),'easy');assert.equal(g.run('config.hazards'),false);assert.equal(g.run('mode'),'gentle');assert.equal(g.run('level().max'),14);assert.ok(g.run('targets.length')>5);assert.equal(g.run("targets.some(t=>t.type==='cactus')"),false);});

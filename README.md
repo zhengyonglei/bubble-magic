@@ -113,3 +113,6 @@ Mouse: move the pointer for a net; use Jump! or Space to simulate jumping. Touch
 
 ### Automatic music (0.11.3)
 Background music now starts when you begin any game. Use Music on to mute; your mute choice remains in effect across games until you reload or turn music back on. Music pauses with gameplay and hidden tabs.
+
+### Treasure party (0.12.0)
+The tree game has one cooperative mode, without difficulty levels or obstacles. Each jump grows four new treasures, with up to 18 on the tree and 14 falling. Added squirrels, pears, peaches and cherries alongside cats, dogs, apples and oranges. The hand-to-hand net now has woven diamond mesh, a rope rim and wooden grips.

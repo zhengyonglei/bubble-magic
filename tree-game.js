@@ -54,8 +54,8 @@ export function netContact(target,net,width,height,now){
  return false;
 }
 export function treeDrop(index,level,random=Math.random){
- const type=['cat','apple','dog','orange','apple'][index%5];
- return {type,fruit:type==='orange'?1:0,x:.18+random()*.64,y:.29+random()*.12,r:type==='cat'||type==='dog'?.061:.042,vx:(random()-.5)*.04,vy:{easy:.1,medium:.14,hard:.18}[level],treeDrop:true,gravity:.08,life:0,ttl:12};
+ const type=['cat','apple','dog','pear','squirrel','apple','peach','dog','orange','cat','cherries','apple'][index%12];
+ return {type,fruit:type==='orange'?1:0,x:.18+random()*.64,y:.29+random()*.12,r:['cat','dog','squirrel'].includes(type)?.061:.042,vx:(random()-.5)*.04,vy:.11,treeDrop:true,gravity:.08,life:0,ttl:12};
 }
 // Only jumps advance the tree: appear, grow, then drop on a later jump.
 export function advanceTree(items,index,level,capacity,random=Math.random){
@@ -63,6 +63,6 @@ export function advanceTree(items,index,level,capacity,random=Math.random){
  for(const item of items){const grown={...item,growth:Math.min(1,item.growth+.3)};
    if(grown.growth>=1&&falling.length<capacity)falling.push(grown);else staying.push(grown);
  }
- for(let i=0;i<2&&staying.length<10;i++)staying.push({...treeDrop(index++,level,random),growth:.15,shown:0});
+ for(let i=0;i<4&&staying.length<18;i++)staying.push({...treeDrop(index++,level,random),growth:.15,shown:0});
  return {items:staying,falling,index};
 }
