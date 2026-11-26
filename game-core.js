@@ -9,7 +9,7 @@ export function handHits(hand,target,now){
   if(now-hand.seen>350||hand.confidence<0.45)return false;
   const b={x:hand.x,y:hand.y};
   // Never sweep a cursor across the screen after a tracking gap or identity jump.
-  const a=hand.prev&&now-hand.prev.time<250&&Math.hypot(b.x-hand.prev.x,b.y-hand.prev.y)<0.25?hand.prev:b;
+  const a=hand.prev&&now-hand.prev.time<250&&(hand.direct||Math.hypot(b.x-hand.prev.x,b.y-hand.prev.y)<0.25)?hand.prev:b;
   return segmentHitsCircle(a,b,target,target.r+hand.r);
 }
 export class Round {

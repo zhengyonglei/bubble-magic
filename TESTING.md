@@ -49,3 +49,8 @@ Browser mouse-mode play testing: Bubble Magic scored 50 and a cactus reduced it 
 Tests cover off-screen bubble entry, increased bubble density, hidden bubble difficulty controls, no bubble obstacles, multi-finger quick taps released between frames, exactly-once scoring and touch cancellation. Other games retain difficulty/cactus tests. Physical-phone touch responsiveness and live-camera ergonomics require device testing.
 
 Version 0.8.0 verification: 28 automated checks pass. Browser QA at 390 × 844 confirmed the difficulty picker is absent for Bubble Magic, the game fits the portrait viewport, many bubbles stream in from the sides, and swipe pops display rings/sparkles and award points and rewards. Browser preview uses mouse input; multi-touch behavior was tested with synthetic pointer events, not a physical phone.
+
+## Version 0.9.0
+31 automated tests pass. New checks verify off-screen launch, center apex and downward fall for all difficulties, camera-jump rejection versus valid direct-input sweeps, and a quick mobile swipe that scores, produces directional fruit halves, and creates a fading trail. Physical-phone and live-camera checks remain to be done on the user devices.
+
+Browser QA at 390 x 844 confirmed upward fruit tosses, no knife prop, a visible violet/white swipe trail, two fruit sliced for 20 points, and directional separation of the halves. No browser runtime errors observed.
