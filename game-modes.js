@@ -6,7 +6,7 @@ export const LEVELS={
 export const GAMES={
  bubbles:{title:'Bubble Magic',icon:'🫧',description:'Reach for floating bubbles and make them pop.',verb:'popped',noun:'bubbles'},
  fruit:{title:'Fruit Slice',icon:'🍉',description:'Sweep your hands through flying fruit. Make a juicy rainbow!',verb:'sliced',noun:'fruit'},
- pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Catch the falling friends with your hands before they float away.',verb:'caught',noun:'friends'}
+ pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Hold both hands out and move the basket between them to catch falling friends.',verb:'caught',noun:'friends'}
 };
 export function isHazard(level,count,enabled=true){const n=LEVELS[level].hazardEvery;return enabled&&n>0&&count%n===n-1;}
 export function moveTarget(t,dt,game,level){const p=LEVELS[level];t.life+=dt;if(game==='pets'){t.y+=dt*p.speed*1.8;t.x+=dt*(t.vx+Math.sin(t.life*2+t.seed)*p.drift*.3);t.vx*=Math.exp(-dt*1.5);}else if(game==='fruit'){t.vy+=dt*p.speed*.65;t.y+=t.vy*dt;t.x+=t.vx*dt;}else{const k=t.type==='cactus'?.35:1;t.y-=dt*p.speed*k;t.x+=dt*(t.vx+Math.cos(t.life*2+t.seed)*p.drift*.5)*k;}if(t.x<.08||t.x>.92){t.x=Math.max(.08,Math.min(.92,t.x));t.vx=-t.vx;}}
@@ -17,7 +17,7 @@ export function swipeCut(hand,target,width,height){const a=hand.prev||hand;const
 
 // Shared radii keep rendering, collision and sliced halves consistent.
 export function fruitSize(kind){return [1.4,1.2,2.15][kind];}
-export function basketGeometry(hand,width,height){return {x:hand.x*width,rim:hand.y*height,halfWidth:Math.max(80,Math.min(125,height*.15)),depth:Math.max(80,Math.min(125,height*.15))};}
+export function basketGeometry(hand,width,height){return {x:hand.x*width,rim:hand.y*height,halfWidth:Math.max(44,Math.min(72,hand.bodyWidth?hand.bodyWidth*width*.45:height*.085)),depth:Math.max(44,Math.min(72,hand.bodyWidth?hand.bodyWidth*width*.45:height*.085))};}
 export function basketContact(target,hand,width,height,now){
  if(!target.prev||now-hand.seen>350||hand.confidence<.45)return null;
  const b=basketGeometry(hand,width,height),radius=target.r*height;
@@ -36,4 +36,25 @@ export function basketContact(target,hand,width,height,now){
  const sweptSide=(oldX< -b.halfWidth&&newX>=-b.halfWidth)||(oldX>b.halfWidth&&newX<=b.halfWidth);
  if(y+radius>b.rim&&y-radius<b.rim+b.depth&&((dx>b.halfWidth-radius&&dx<b.halfWidth+radius)||sweptSide))return 'bounce';
  return null;
+}
+
+export function playerBaskets(hands){
+ const grouped=new Map();const baskets=[];
+ for(const h of hands){if(h.playerId==null){baskets.push(h);continue;}if(!grouped.has(h.playerId))grouped.set(h.playerId,[]);grouped.get(h.playerId).push(h);}
+ for(const [id,pair] of grouped){
+  if(pair.length!==2)continue;
+  const [a,b]=pair,previous=a.prev&&b.prev?{x:(a.prev.x+b.prev.x)/2,y:(a.prev.y+b.prev.y)/2,time:Math.min(a.prev.time,b.prev.time)}:null;
+  baskets.push({id:'basket:'+id,playerId:id,x:(a.x+b.x)/2,y:(a.y+b.y)/2,bodyWidth:a.bodyWidth,r:0,seen:Math.min(a.seen,b.seen),confidence:Math.min(a.confidence,b.confidence),prev:previous});
+ }
+ return baskets;
+}
+export function crownGeometry(points,width,height){
+ const nose=points[0],left=points[2],right=points[5],earL=points[7],earR=points[8];
+ const shoulder=Math.hypot((points[11].x-points[12].x)*width,(points[11].y-points[12].y)*height);
+ const eyes=left&&right&&Math.hypot((left.x-right.x)*width,(left.y-right.y)*height)>2;
+ const earSpan=earL&&earR?Math.hypot((earL.x-earR.x)*width,(earL.y-earR.y)*height):0;
+ const faceWidth=Math.max(16,Math.min(shoulder*.9||100,Math.max(earSpan,eyes?Math.hypot((left.x-right.x)*width,(left.y-right.y)*height)*2.3:shoulder*.5)));
+ const eyeY=eyes?(left.y+right.y)*height/2:nose.y*height-faceWidth*.18;
+ const bottom=eyeY-faceWidth*.62,h=faceWidth*.72;
+ return {x:eyes?(left.x+right.x)*width/2:nose.x*width,y:bottom-h/2,width:faceWidth*1.35,height:h};
 }

@@ -1,11 +1,11 @@
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry} from './game-modes.js?v=0.7.1';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.7.1';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry} from './game-modes.js?v=0.7.2';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.7.2';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.7.1';
+const BUILD='0.7.2';
 const art={};for(const [name,file] of Object.entries({cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -115,7 +115,7 @@ function updatePlayers(poses,now){
   for(const player of players)for(const joint of [15,16]){
     const p=player.pose[joint];if((p.visibility??1)<.45||player.stable<2)continue;
     const point=screenPoint(p),id=`${player.id}:${joint}`,old=prevHands.find(h=>h.id===id);
-    hands.push({...point,id,r:mode==='gentle'?.026:.019,confidence:p.visibility??1,seen:now,prev:old?{x:old.x,y:old.y,time:old.seen}:null});
+    hands.push({...point,id,playerId:player.id,bodyWidth:Math.hypot((screenPoint(player.pose[11]).x-screenPoint(player.pose[12]).x),(screenPoint(player.pose[11]).y-screenPoint(player.pose[12]).y)*H/W),r:mode==='gentle'?.026:.019,confidence:p.visibility??1,seen:now,prev:old?{x:old.x,y:old.y,time:old.seen}:null});
   }
   if(phase==='ready'){$('start-round').disabled=hands.length===0;$('ready-title').textContent=players.length?`${players.length} player${players.length>1?'s':''} in view`:'Looking for players…';}
 }
@@ -156,11 +156,12 @@ function spawn(now,practice=false){
   const zone=playerZone(spawnCount),star=!practice&&spawnCount%7===6;
   const cactus=!practice&&config.hazards&&difficulty!=='easy'&&hazardClock>=(difficulty==='hard'?3:4)&&targets.filter(t=>t.type==='cactus').length<2&&now>recoveryUntil;
   const type=cactus?'cactus':selectedGame==='fruit'?'fruit':selectedGame==='pets'?(spawnCount%2?'cat':'dog'):star?'star':'bubble',r=level().radius*(selectedGame==='bubbles'&&!cactus?bubbleSize(spawnCount):selectedGame==='fruit'&&!cactus?fruitSize(spawnCount%3):selectedGame==='pets'&&!cactus?1.6:1);
+  const petBaskets=playerBaskets(hands);const fittedRadius=type==='cat'||type==='dog'?Math.min(r,...petBaskets.map(h=>basketGeometry(h,W,H).halfWidth*.95/H)):r;
   let t;
   for(let attempt=0;attempt<15;attempt++){
     let y=zone.y+(Math.random()-.5)*zone.h;
     if(config.height==='low')y=clamp(y+.12,.3,.72);
-    t={id:++targetId,x:clamp(zone.x+(Math.random()-.5)*zone.w,.09,.91),y:selectedGame==='pets'?Math.max(.13,zone.y-zone.h/2):selectedGame==='fruit'?Math.min(.72,zone.y+zone.h/2):clamp(y,.18,.72),r,type,life:0,ttl:selectedGame==='pets'?20:practice?12:14,color:colors[spawnCount%colors.length],vx:(Math.random()<.5?-1:1)*level().drift,vy:-level().speed*2.6,fruit:spawnCount%3,seed:Math.random()*6};
+    t={id:++targetId,x:clamp(zone.x+(Math.random()-.5)*zone.w,.09,.91),y:selectedGame==='pets'?Math.max(.13,zone.y-zone.h/2):selectedGame==='fruit'?Math.min(.72,zone.y+zone.h/2):clamp(y,.18,.72),r:fittedRadius,type,life:0,ttl:selectedGame==='pets'?20:practice?12:14,color:colors[spawnCount%colors.length],vx:(Math.random()<.5?-1:1)*level().drift,vy:-level().speed*2.6,fruit:spawnCount%3,seed:Math.random()*6};
     if(targets.every(o=>Math.hypot((o.x-t.x)*W,(o.y-t.y)*H)>(o.r+t.r)*H+15)&&(!cactus||hands.every(h=>Math.hypot((h.x-t.x)*W,(h.y-t.y)*H)>H*(r+h.r)+45)))break;
     t=null;
   }
@@ -174,33 +175,34 @@ function step(dt,now){
     hands=pointer.active?[{...pointer,id:'mouse',r:mode==='gentle'?.026:.019,confidence:1,seen:now,prev:mousePrev}]:[];
     mousePrev=pointer.active?{x:pointer.x,y:pointer.y,time:now}:null;
   }else if(now-lastResult>350){hands=[];if(now-lastResult>600)players=[];}
-  const present=source==='demo'||hands.length>0;
+  const controls=selectedGame==='pets'?playerBaskets(hands):hands;
+  const present=source==='demo'||controls.length>0;
   const active=present&&!manualPause&&!document.hidden&&!$('settings').open;
   if(active&&!previousActive){recoveryUntil=now+1000;hands.forEach(h=>h.prev=null);}
   previousActive=active;
   if(phase==='ready'){
     readyClock=active?readyClock+dt:0;
     $('ready-title').textContent=active?'Starting in '+Math.max(1,Math.ceil(3-readyClock))+'…':'Show your hands to start';
-    $('ready-description').textContent='Every catch earns points and dress-up rewards once the countdown ends.';
+    $('ready-description').textContent=selectedGame==='pets'&&source!=='demo'?'Keep both hands visible. Your basket sits between them.':'Every catch earns points and dress-up rewards once the countdown ends.';
     $('pop-count').textContent='Get ready · scoring starts shortly';
     if(readyClock>=3)startRound();
   }
   if(phase==='playing'){
     if(manualPause)status('Paused. Take a breath, then press Resume.');
-    else if(!present)status('Step back into view with your hands visible. The clock is paused.');
+    else if(!present)status(selectedGame==='pets'?'Show both hands to hold your basket. The clock is paused.':'Step back into view with your hands visible. The clock is paused.');
     else status('');
     round.tick(dt,active);
     if(round.finished){$('time').textContent='0:00';endRound();return;}
     $('score').textContent=round.score.toLocaleString();$('pop-count').textContent=`${round.pops} ${round.pops===1?(selectedGame==='bubbles'?'bubble':selectedGame==='pets'?'friend':'fruit'):GAMES[selectedGame].noun} ${GAMES[selectedGame].verb}`;
     const seconds=Math.ceil(round.remaining);$('time').textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
-    $('combo').textContent=round.multiplier>1?`${round.multiplier}× sparkle streak!`:(mode==='challenge'&&config.hazards?'Avoid cacti · −20 points':selectedGame==='fruit'?'Swipe to slice':selectedGame==='pets'?'Catch the falling friends':'Reach to pop');
+    $('combo').textContent=round.multiplier>1?`${round.multiplier}× sparkle streak!`:(mode==='challenge'&&config.hazards?'Avoid cacti · −20 points':selectedGame==='fruit'?'Swipe to slice':selectedGame==='pets'?'Catch from above · one basket per player':'Reach to pop');
   }
   if(phase==='playing'&&active){
     hazardClock+=dt;
     spawnClock+=dt;const practice=phase==='ready',interval=practice?1.3:level().interval;
     if(spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
     for(const t of targets){t.prev={x:t.x,y:t.y};moveTarget(t,dt,selectedGame,difficulty);}
-    const hit=targets.filter(t=>hands.some(h=>{
+    const hit=targets.filter(t=>controls.some(h=>{
       if(selectedGame==='pets'&&t.type!=='cactus'){
         const contact=basketContact(t,h,W,H,now);
         if(contact==='catch'){caughtPets.push({type:t.type,r:t.r,startX:t.x-h.x,startY:t.y-h.y,hand:{...h},handId:h.id,life:0});return true;}
@@ -221,7 +223,7 @@ function step(dt,now){
     }
     const ids=new Set(hit.map(t=>t.id));targets=targets.filter(t=>!ids.has(t.id)&&t.life<t.ttl&&t.y>.07&&t.y<.83);
   }
-  if(active){caughtPets.forEach(p=>{p.life+=dt;const h=hands.find(h=>h.id===p.handId);if(h)p.hand={...h};});caughtPets=caughtPets.filter(p=>p.life<2.4);}
+  if(active){caughtPets.forEach(p=>{p.life+=dt;const h=controls.find(h=>h.id===p.handId);if(h)p.hand={...h};});caughtPets=caughtPets.filter(p=>p.life<2.4);}
   trailClock+=dt;
   if(active&&!reduceMotion&&trailClock>.05){trailClock=0;for(const h of hands)particles.push({x:h.x*W,y:h.y*H,vx:(Math.random()-.5)*15,vy:12,life:0,ttl:.4,color:'#d79eea',r:2+Math.random()*2});}
   for(const p of particles){p.life+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=100*dt;}particles=particles.filter(p=>p.life<p.ttl).slice(-200);
@@ -283,10 +285,10 @@ function welcomeArt(t){if(selectedGame!=='bubbles'&&W>=850){const x=W*.76,y=H*.3
 }
 function mapped(p,i){return p.screen?p.pose[i]:screenPoint(p.pose[i]);}
 function wearables(p,behind,t){const level=previewRewards?3:rewardLevel(totalPops),l=mapped(p,11),r=mapped(p,12),head=mapped(p,0),cx=(l.x+r.x)*W/2,sy=(l.y+r.y)*H/2,bw=clamp(Math.abs(l.x-r.x)*W,40,200);ctx.save();
-  if(artReady('atlas')){if(behind&&level>=3)sprite('wings',cx,sy+bw*.65,bw*3,bw*2.5);if(!behind&&level>=2)sprite('crown',head.x*W,head.y*H-bw*.48,bw*1.5,bw*1.2);if(!behind&&level>=1)for(const joint of [15,16]){if(!p.screen&&(p.pose[joint].visibility??1)<.45)continue;const h=mapped(p,joint);sprite('bracelet',h.x*W,h.y*H,44,35);}ctx.restore();return;}
+  if(artReady('atlas')){if(behind&&level>=3)sprite('wings',cx,sy+bw*.65,bw*3,bw*2.5);if(!behind&&level>=2){const c=crownGeometry(p.pose.map((_,i)=>mapped(p,i)),W,H);sprite('crown',c.x,c.y,c.width,c.height);}if(!behind&&level>=1)for(const joint of [15,16]){if(!p.screen&&(p.pose[joint].visibility??1)<.45)continue;const h=mapped(p,joint);sprite('bracelet',h.x*W,h.y*H,44,35);}ctx.restore();return;}
 
   if(behind&&level>=3){for(const side of [-1,1]){ctx.save();ctx.translate(cx+side*bw*.3,sy+bw*.45);ctx.rotate(side*(.35+Math.sin(t*2)*.06));ctx.fillStyle='#d5b3ebaa';ctx.strokeStyle='#b69ace';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(side*bw*.55,-bw*.2,bw*.72,bw*.95,side*.4,0,Math.PI*2);ctx.fill();ctx.stroke();ellipse(side*bw*.6,bw*.65,bw*.5,bw*.55,'#efc3ddbb');star(side*bw*.62,-bw*.25,9,'#fff0c6');ctx.restore();}}
-  if(!behind&&level>=2){const x=head.x*W,y=head.y*H-bw*.53;ctx.translate(x,y);ctx.rotate(clamp(Math.atan(((r.y-l.y)*H)/((r.x-l.x)*W || 1)),-.3,.3));ctx.fillStyle='#edc76c';ctx.strokeStyle='#c99d44';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-bw*.36,0);ctx.lineTo(-bw*.44,-bw*.29);ctx.lineTo(-bw*.17,-bw*.15);ctx.lineTo(0,-bw*.42);ctx.lineTo(bw*.17,-bw*.15);ctx.lineTo(bw*.44,-bw*.29);ctx.lineTo(bw*.36,0);ctx.closePath();ctx.fill();ctx.stroke();star(0,-bw*.17,6,'#fffae5');ctx.setTransform(Math.min(devicePixelRatio||1,2),0,0,Math.min(devicePixelRatio||1,2),0,0);}
+  if(!behind&&level>=2){const c=crownGeometry(p.pose.map((_,i)=>mapped(p,i)),W,H),x=c.x,y=c.y+c.height/2;ctx.translate(x,y);ctx.rotate(clamp(Math.atan(((r.y-l.y)*H)/((r.x-l.x)*W || 1)),-.3,.3));ctx.fillStyle='#edc76c';ctx.strokeStyle='#c99d44';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-bw*.36,0);ctx.lineTo(-bw*.44,-bw*.29);ctx.lineTo(-bw*.17,-bw*.15);ctx.lineTo(0,-bw*.42);ctx.lineTo(bw*.17,-bw*.15);ctx.lineTo(bw*.44,-bw*.29);ctx.lineTo(bw*.36,0);ctx.closePath();ctx.fill();ctx.stroke();star(0,-bw*.17,6,'#fffae5');ctx.setTransform(Math.min(devicePixelRatio||1,2),0,0,Math.min(devicePixelRatio||1,2),0,0);}
   if(!behind&&level>=1)for(const joint of [15,16]){if(!p.screen&&(p.pose[joint].visibility??1)<.45)continue;const h=mapped(p,joint),x=h.x*W,y=h.y*H;ctx.strokeStyle='#e7bc66';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,12,7,-.3,0,Math.PI*2);ctx.stroke();for(let i=0;i<3;i++)star(x+Math.cos(t*2+i*2.1)*21,y+Math.sin(t*2+i*2.1)*18,4,'#fff2bd',t);}
   ctx.restore();
 }
@@ -301,7 +303,7 @@ function draw(now){const t=now/1000;background(t);
   for(const [i,p] of particles.entries()){ctx.globalAlpha=1-p.life/p.ttl;if(i%4===0&&artReady('atlas'))sprite('sparkles',p.x,p.y,p.r*5);else ellipse(p.x,p.y,p.r,p.r,p.color);}ctx.globalAlpha=1;
   for(const l of labels){ctx.globalAlpha=Math.min(1,(1.25-l.life)*2);ctx.font='800 38px Outfit,sans-serif';ctx.textAlign='center';ctx.lineWidth=6;ctx.lineJoin='round';ctx.strokeStyle='#503376';ctx.strokeText(l.text,l.x,l.y);ctx.fillStyle='#fff3a4';ctx.fillText(l.text,l.x,l.y);}ctx.globalAlpha=1;ctx.textAlign='left';
   if(selectedGame==='pets'){
-    const baskets=new Map(hands.map(h=>[h.id,h]));
+    const baskets=new Map(playerBaskets(hands).map(h=>[h.id,h]));
     for(const pet of caughtPets)if(!baskets.has(pet.handId))baskets.set(pet.handId,pet.hand);
     for(const h of baskets.values()){
       drawBasket(h,false);

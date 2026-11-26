@@ -2,7 +2,7 @@
 
 A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.7.1.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.7.2.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
@@ -93,3 +93,5 @@ Scores are prominent and every successful target shows +points where it was coll
 Medium/Hard schedule cacti after about 4/3 active seconds, subject to safe placement and a maximum of two on screen; Solo and Together use the same rules. Easy has none. Fruit sizes differ: oranges < apples < watermelons. Animals have full-body artwork. Hold the larger basket under a falling animal: entry through the top scores; side contact bounces without points.
 
 Version 0.7.1 removes illustrated demo players, enlarges animals by 60%, and widens baskets to fit. Caught animals descend at full size behind the front rim, settle visibly, and fade after a 2.4-second catch animation. Camera players and their earned wearables remain visible in camera mode.
+
+Version 0.7.2 uses one smaller basket per person, centered between their two tracked hands. Both hands must be visible; loss of both-hand control pauses the clock when no player can hold a basket. Basket width follows projected shoulder width with limits, and animals fit the opening. Mouse demo uses one pointer-controlled basket. Crowns anchor above the forehead using eye/ear landmarks. Distance is inferred from body size in the camera image, not measured in meters.

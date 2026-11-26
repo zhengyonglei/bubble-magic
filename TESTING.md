@@ -41,3 +41,6 @@ Browser mouse-mode play testing: Bubble Magic scored 50 and a cactus reduced it 
 
 ## Version 0.7.1
 22 tests pass, including catch animation lifetime, full-size retention, pause behavior and exactly-once scoring. Browser mouse testing confirmed no illustrated player, larger animals, a puppy visibly descending and sitting behind the basket front, and score increasing once per catch. Saved preview captures the puppy inside the basket. Camera regression remains untested.
+
+## Version 0.7.2
+25 tests cover smaller basket geometry, two-person hand grouping, midpoint camera catches (synthetic tracking input), and crown bounds above the eyes. Camera appearance at approximately two meters still requires a laptop check; the webcam has no metric distance calibration.
