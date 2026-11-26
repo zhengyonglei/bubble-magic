@@ -2,16 +2,16 @@
 
 A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.7.2.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.8.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
 Play online: **https://zhengyonglei.github.io/bubble-magic/**
 
-Pick a game, choose Easy, Medium, or Hard, then:
+Pick a game (Fruit Slice and Cats & Dogs also offer Easy, Medium, or Hard), then:
 
 - **Play with camera:** allow camera access, stand with head and hands visible, and hold ready for the automatic 3-second countdown. Keep only one or two players in view; anyone detected may become a player in this prototype. No automatic bystander exclusion or raise-hand admission yet.
-- **Try mouse demo:** move the pointer to pop bubbles. No illustrated player is shown; your pointer controls the prop. Arrow keys can also move the hand cursor when the game canvas has focus.
+- **Play with mouse or touch:** move the pointer to pop bubbles. No illustrated player is shown; your pointer controls the prop. Arrow keys can also move the hand cursor when the game canvas has focus.
 - **Use a video:** choose a local MP4/WebM supported by your browser. It plays in a loop through the same tracking and segmentation pipeline. The file stays on the device.
 
 Settings include one/two players, lighter processing, optional background removal, cactus hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. On Medium and Hard, cacti reset combos and deduct up to 20 points (score never goes below zero). Rewards are shared and persist between rounds until reset or page reload.
@@ -95,3 +95,5 @@ Medium/Hard schedule cacti after about 4/3 active seconds, subject to safe place
 Version 0.7.1 removes illustrated demo players, enlarges animals by 60%, and widens baskets to fit. Caught animals descend at full size behind the front rim, settle visibly, and fade after a 2.4-second catch animation. Camera players and their earned wearables remain visible in camera mode.
 
 Version 0.7.2 uses one smaller basket per person, centered between their two tracked hands. Both hands must be visible; loss of both-hand control pauses the clock when no player can hold a basket. Basket width follows projected shoulder width with limits, and animals fit the opening. Mouse demo uses one pointer-controlled basket. Crowns anchor above the forehead using eye/ear landmarks. Distance is inferred from body size in the camera image, not measured in meters.
+
+Version 0.8.0: Bubble Magic uses one obstacle-free Bubble party mode (no difficulty picker), spawning up to 20 varied bubbles from outside the left/right edges. Pop feedback adds expanding rings and sparkle bursts. Choose Play with mouse or touch to test on a phone without a camera: tap, swipe or use several fingers. Touch cancel/release clears controls, and the play area fits the phone viewport. Fruit and pet games retain Easy/Medium/Hard.

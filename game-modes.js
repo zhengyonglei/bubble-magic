@@ -9,7 +9,7 @@ export const GAMES={
  pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Hold both hands out and move the basket between them to catch falling friends.',verb:'caught',noun:'friends'}
 };
 export function isHazard(level,count,enabled=true){const n=LEVELS[level].hazardEvery;return enabled&&n>0&&count%n===n-1;}
-export function moveTarget(t,dt,game,level){const p=LEVELS[level];t.life+=dt;if(game==='pets'){t.y+=dt*p.speed*1.8;t.x+=dt*(t.vx+Math.sin(t.life*2+t.seed)*p.drift*.3);t.vx*=Math.exp(-dt*1.5);}else if(game==='fruit'){t.vy+=dt*p.speed*.65;t.y+=t.vy*dt;t.x+=t.vx*dt;}else{const k=t.type==='cactus'?.35:1;t.y-=dt*p.speed*k;t.x+=dt*(t.vx+Math.cos(t.life*2+t.seed)*p.drift*.5)*k;}if(t.x<.08||t.x>.92){t.x=Math.max(.08,Math.min(.92,t.x));t.vx=-t.vx;}}
+export function moveTarget(t,dt,game,level){const p=LEVELS[level];t.life+=dt;if(t.blown){t.x+=t.vx*dt;t.y+=Math.sin(t.life*1.8+t.seed)*dt*.018;return;}if(game==='pets'){t.y+=dt*p.speed*1.8;t.x+=dt*(t.vx+Math.sin(t.life*2+t.seed)*p.drift*.3);t.vx*=Math.exp(-dt*1.5);}else if(game==='fruit'){t.vy+=dt*p.speed*.65;t.y+=t.vy*dt;t.x+=t.vx*dt;}else{const k=t.type==='cactus'?.35:1;t.y-=dt*p.speed*k;t.x+=dt*(t.vx+Math.cos(t.life*2+t.seed)*p.drift*.5)*k;}if(t.x<.08||t.x>.92){t.x=Math.max(.08,Math.min(.92,t.x));t.vx=-t.vx;}}
 export function canSlice(hand,now){return hand.prev&&now-hand.prev.time<250&&Math.hypot(hand.x-hand.prev.x,hand.y-hand.prev.y)>.002;}
 
 export function bubbleSize(index){return [.78,1,1.3,1,.78,1.3][index%6];}
