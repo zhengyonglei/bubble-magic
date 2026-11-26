@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jungle Trail · Play Garden</title><link rel="icon" href="./assets/icon.svg"><link rel="stylesheet" href="./runner.css"></head>
+<body><main>
+<canvas id="world" aria-label="Three lane jungle course" tabindex="0"></canvas>
+<header><a href="./">✿ Play Garden</a><span>JUNGLE TRAIL <small>SOLO PROTOTYPE</small></span><button id="fullscreen">Fullscreen</button></header>
+<div class="hud"><div><small>GARDEN STARS</small><b id="stars">0</b></div><div><small>THE RAINBOW GROVE</small><progress id="progress" max="350" value="0"></progress><span id="distance">0 / 350 m</span></div><button id="pause">Pause</button></div>
+<section id="welcome" class="panel"><span class="eyebrow">A LITTLE MOVEMENT. A BIG ADVENTURE.</span><h1>Into the<br><em>jungle!</em></h1><p>March along a starry trail. Hop over fallen logs and duck under leafy arches. Every adventure is a happy one.</p><div class="instructions"><span>↔ Lean to change lanes</span><span>✦ Jump over logs</span><span>⌄ Squat under arches</span></div><button id="demo" class="primary">Explore with keys or touch</button><button id="camera">Try movement camera · experimental</button><p class="fine">Keyboard: hold W / ↑ to move · A D / ← → for lanes · Space to jump · S / ↓ to duck. Take breaks whenever you like.</p><p class="fine">Camera stays on this device. Full body in view, clear floor, adult nearby for little explorers. No photos or recordings saved.</p></section>
+<aside id="camera-view" hidden><video id="video" autoplay playsinline muted></video><div class="outline"></div><p id="tracking">Loading camera…</p><button id="select">Select player again</button><button id="stop-camera">Stop camera & use controls</button></aside>
+<div id="message" role="status" aria-live="polite">Your jungle adventure awaits.</div>
+<div id="controls" hidden><button data-action="left" aria-label="Move left">← Lane</button><button data-action="move">Hold to march</button><button data-action="jump">Jump!</button><button data-action="duck">Hold to duck</button><button data-action="right" aria-label="Move right">Lane →</button></div>
+<section id="finish" class="panel" hidden><span class="eyebrow">LOOK HOW FAR YOU CAME!</span><h1>Trail<br><em>blazer!</em></h1><p id="result"></p><button id="again" class="primary">Another adventure</button><a href="./">Back to Play Garden</a></section>
+</main><script type="module" src="./runner.js"></script></body></html>

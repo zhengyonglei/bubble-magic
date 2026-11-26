@@ -116,3 +116,13 @@ Background music now starts when you begin any game. Use Music on to mute; your 
 
 ### Treasure party (0.12.0)
 The tree game has one cooperative mode, without difficulty levels or obstacles. Each jump grows four new treasures, with up to 18 on the tree and 14 falling. Added squirrels, pears, peaches and cherries alongside cats, dogs, apples and oranges. The hand-to-hand net now has woven diamond mesh, a rope rim and wooden grips.
+
+## Jungle Trail — feature prototype (2026-11-26)
+
+Open `runner.html` through `npm start` (http://127.0.0.1:4173/runner.html), or choose Jungle Trail from the suite menu. Single player only. Hold W/Up to march, A/D or Left/Right to change lanes, Space to jump, S/Down to duck. Touch controls offer the same actions. A 350 m course has stars, logs and leafy arches; bumps never deduct stars. Pause and tab loss freeze play. Restart begins a new independent score.
+
+The separate runner page uses world-space cuboid meshes and perspective projection into Canvas 2D. It adds no runtime package dependency and does not modify the existing games' gameplay code. Camera mode reuses the pinned worker with segmentation disabled, 480 x 360 input, at most one inference in flight, and a 10 Hz dispatch ceiling. Four pose candidates permit conservative bystander checks; actual inference rate and performance on the 2018 Mac are unmeasured.
+
+Experimental camera: stand alone, centered, with full body visible; raise both hands for 1.2 seconds. Lower hands, alternate knees to march, lean for lanes, jump or squat. Current thresholds need real child/laptop tuning. Select again to recalibrate. Camera errors allow returning to controls; navigation and round completion release camera tracks.
+
+Player lock is temporary position/torso-scale continuity, not durable identity. Distant detected newcomers are allowed; close people, incomplete detections, missing player, implausible movement or stale samples pause all simulation. Uncertainty is latched until deliberate re-selection. Pose-only tracking cannot guarantee identity if the detector merges or misses people, or another person occupies the same position with similar proportions. There is no face recognition, clothing analysis, saved identity or avatar photo storage. Future local avatar appearance must remain separate from session tracking, with deletion and device-specific storage explained. Photo personalization and the dance game are not implemented.

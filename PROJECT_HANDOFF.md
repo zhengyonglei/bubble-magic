@@ -45,3 +45,11 @@ Latest: 0.11.0 replaces pet baskets with separate hand-to-hand nets for every pl
 0.11.3: sound defaults on; baseSession unlocks AudioContext from the Play gesture. Existing Music button mutes music and effects for all subsequent games until toggled back on. No audio plays on initial page load.
 
 0.12.0: pets forces Easy/gentle internally and hides difficulty/hazard controls. Fixed max 14 falling; 4 new branch items per jump; 18 branch-item cap. New 2x2 tree-treasures-ai-v1.png cells: squirrel, pear, peach, cherries. treasureArt renders new sheet throughout growth/drop/catch. Woven net uses the same sag polygon for rendering and collisions.
+
+## Jungle Trail feature branch handoff — 2026-11-26
+
+Baseline verified: clean 976acad, package 0.12.0, all 53 tests passing. Implementation is on feature/jungle-trail. runner.html/css/js and runner-core.js isolate the new single-player course; index.html only adds its menu link. Existing gameplay and vision-worker files remain unchanged. npm run check includes the new modules. 65 tests now pass, including 12 runner tests. No deployment or version release has been made.
+
+Browser QA was attempted but blocked: browser-extension surfaces were unavailable; native Chrome getApp twice failed with unknown/expired node_repl continuation; recovered in-app browser could not reach the Windows localhost server (ERR_CONNECTION_TIMED_OUT). Do not describe this as a visual browser playtest. Production renderer/update/input paths were exercised under Node with DOM/canvas doubles. Next priority is real browser visual QA, followed by webcam and TV testing, then movement threshold tuning. No physical-camera, physical-touch, Safari or old-Mac benchmark performed.
+
+Keep the conservative pause-on-uncertainty behavior. Explicit reselection is preferable to unverified automatic reacquisition. See README for limitations. Add motion prediction/appearance evidence only with appropriate local processing and tests; never imply pose indices are persistent identities.

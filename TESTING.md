@@ -79,3 +79,16 @@ Background music defaults on for all games. Audio is unlocked by the Play action
 
 ## 0.12.0 — Treasure variety and woven net
 Added coverage for fixed tree-party settings, larger batches, mixed treasure types and no hazards after switching from Hard Fruit Slice. Existing draw tests cover new sprites with loaded and fallback art, net rendering and complete rounds.
+
+## Jungle Trail prototype — 2026-11-26
+
+65 Node tests pass (53 baseline plus 12 new). New coverage: no movement without marching, full pause, exactly-once stars, harmless obstacles, jump/duck clearance, lane avoidance, course completion, sustained deliberate admission, distant newcomer/reordering, crossing/ambiguity, occlusion/partial landmarks, exit/replacement and stale tracking. Synthetic movement covers knee alternation, jump edge, squat and mirrored lean. Production-page tests execute draw/update with DOM/canvas doubles, marching/scoring, pause/restart, pointer cancellation, blur cleanup and camera uncertainty collision freeze. Syntax and diff whitespace checks pass.
+
+These are synthetic tests, not a real browser or camera validation. Browser automation failed before visual verification (native Chrome continuation failure; in-app browser localhost timeout). No measured frame rate or memory usage is claimed.
+
+Laptop acceptance checklist:
+1. Start local preview and open runner.html. Inspect menu, desktop/portrait layout, explorer visibility, lane/obstacle alignment, scoring, jump/duck timing, finish/restart, fullscreen and keyboard/touch combinations.
+2. Enable camera on HTTPS or localhost. Frame one full body. Hold both hands raised in the outline; verify no play starts before admission. March, stop, lean, jump, squat and check comfort at both children's heights.
+3. A newcomer at the edge must not control the game. Bring them near/crossing the player: simulation and collisions must freeze. Have the player leave, partly hide, or be occluded. No bystander takeover; clear the scene and deliberately select again. Detector misses/merged poses remain a known limitation.
+4. Hide tab, return, resume and reselect. Check stop-camera and navigation release webcam indicator. Test camera denial/model failure and switching to keyboard.
+5. On 2018 Intel Mac/HDMI TV, assess frame rate, thermal load, input latency, actual camera processing rate, and a complete session before tuning thresholds or claiming support.
