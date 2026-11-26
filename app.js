@@ -1,13 +1,13 @@
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.11.0';
-import {GardenMusic} from './music.js?v=0.11.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.11.0';
-import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.11.0';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.11.1';
+import {GardenMusic} from './music.js?v=0.11.1';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.11.1';
+import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.11.1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.11.0';
+const BUILD='0.11.1';
 const art={};for(const [name,file] of Object.entries({tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -382,10 +382,11 @@ setMode('easy');setPlayers(1);updateRewards();mainMenu();resize();requestAnimati
 
 function drawTree(t){
  const wobble=treeWobble>0?Math.sin(t*24)*treeWobble*.055:0;
- ctx.save();ctx.translate(W*.5,H*.56);ctx.rotate(wobble);
- if(artReady('tree'))ctx.drawImage(art.tree,-W*.33,-H*.53,W*.66,H*.62);
- else{ctx.strokeStyle='#b18a62';ctx.lineWidth=Math.max(15,W*.028);ctx.beginPath();ctx.moveTo(0,H*.08);ctx.lineTo(0,-H*.28);ctx.stroke();for(let i=0;i<5;i++)ellipse((i-2)*W*.095,-H*(.28+(i%2)*.09),W*.13,H*.15,['#a4dbad','#bce6b4','#85cfa7'][i%3]);}
- for(const item of treeItems){const size=item.r*H*(.35+item.shown*.65);ctx.save();ctx.globalAlpha=.25+item.shown*.75;const x=(item.x-.5)*W,y=item.y*H-H*.56;if(item.type==='cat'||item.type==='dog')petArt(x,y,size,item.type);else fruitArt(x,y,size,item.fruit);ctx.restore();}
+ ellipse(W*.5,H*.825,W*.16,H*.018,'#526c4930');
+ ctx.save();ctx.translate(W*.5,H*.83);ctx.rotate(wobble);
+ if(artReady('tree'))ctx.drawImage(art.tree,-W*.33,-H*.80,W*.66,H*.80);
+ else{ctx.strokeStyle='#b18a62';ctx.lineWidth=Math.max(15,W*.028);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-H*.48);ctx.stroke();for(let i=0;i<5;i++)ellipse((i-2)*W*.095,-H*(.48+(i%2)*.12),W*.13,H*.15,['#a4dbad','#bce6b4','#85cfa7'][i%3]);}
+ for(const item of treeItems){const size=item.r*H*(.35+item.shown*.65);ctx.save();ctx.globalAlpha=.25+item.shown*.75;const x=(item.x-.5)*W,y=item.y*H-H*.83;if(item.type==='cat'||item.type==='dog')petArt(x,y,size,item.type);else fruitArt(x,y,size,item.fruit);ctx.restore();}
  ctx.restore();ctx.save();ctx.font='700 '+Math.max(12,Math.min(21,W*.019))+'px sans-serif';ctx.textAlign='center';ctx.fillStyle='#345c47';ctx.fillText(source==='demo'?'Tap Jump! to grow, then drop':'JUMP to grow, then drop!',W*.5,H*.70);ctx.fillText('EVERYONE: spread hands to catch',W*.5,H*.75);ctx.restore();
 }
 function drawNet(net){

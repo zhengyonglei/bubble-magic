@@ -55,7 +55,7 @@ export function netContact(target,net,width,height,now){
 }
 export function treeDrop(index,level,random=Math.random){
  const type=['cat','apple','dog','orange','apple'][index%5];
- return {type,fruit:type==='orange'?1:0,x:.18+random()*.64,y:.23+random()*.09,r:type==='cat'||type==='dog'?.061:.042,vx:(random()-.5)*.04,vy:{easy:.1,medium:.14,hard:.18}[level],treeDrop:true,gravity:.08,life:0,ttl:12};
+ return {type,fruit:type==='orange'?1:0,x:.18+random()*.64,y:.29+random()*.12,r:type==='cat'||type==='dog'?.061:.042,vx:(random()-.5)*.04,vy:{easy:.1,medium:.14,hard:.18}[level],treeDrop:true,gravity:.08,life:0,ttl:12};
 }
 // Only jumps advance the tree: appear, grow, then drop on a later jump.
 export function advanceTree(items,index,level,capacity,random=Math.random){

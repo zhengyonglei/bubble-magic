@@ -67,3 +67,6 @@ Browser smoke test: fullscreen layout, active butterfly input and scoring, music
 
 ## 0.11.0 — Jump-grown treasure tree
 Regression tests cover torso rise/landing, jitter and tracking loss, two independent nets, side/mesh contact, fast object and net sweeps, gradual tree growth and repeated-jump release, shared scoring, pause, and camera-pose integration. Full-round draw tests exercise the growing tree and caught treasures. Browser smoke test checked successive Jump! presses reveal, grow and release treasures, and net catches add points. Live physical jumps and two-person webcam performance still need laptop testing.
+
+## 0.11.1 — Grounded tree
+Tree roots now sit at the garden ground line with a contact shadow. Shaking pivots at the roots. Treasure branch positions follow the taller canopy.
