@@ -8,3 +8,6 @@ The repository contains original game code and vector/Canvas artwork. It referen
 - **Optional diagnostic photograph**: https://storage.googleapis.com/mediapipe-assets/pose.jpg , linked from Google's pose examples. Downloaded only when the user starts the sample-image check. The photo and derived local testing clips are not committed or republished as game assets.
 
 No original character art, music, or branding from Fruit Ninja or other games is used.
+
+## Generated art
+Garden, cactus and butterfly images were generated with OpenAI image generation for this game. See assets/ART_PROMPTS.md for the prompt specifications.

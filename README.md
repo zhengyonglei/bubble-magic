@@ -2,7 +2,7 @@
 
 A cooperative, browser-only bubble game: move your hands, pop bubbles, and earn sparkle bracelets, a crown, and butterfly wings.
 
-**Prototype 0.2.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.3.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
