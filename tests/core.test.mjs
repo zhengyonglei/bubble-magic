@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Round,handHits,rewardLevel,matchPoses} from '../game-core.js';
+test('two hands cannot score the same bubble twice',()=>{const r=new Round();assert.equal(r.hit({id:1,type:'bubble'}).points,10);assert.equal(r.hit({id:1,type:'bubble'}),null);assert.equal(r.score,10);assert.equal(r.pops,1);});
+test('challenge multiplier caps, cloud resets without deducting',()=>{const r=new Round('challenge');for(let i=0;i<10;i++){r.tick(.1);r.hit({id:i,type:'bubble'});}assert.equal(r.score,170);assert.equal(r.multiplier,3);r.hit({id:11,type:'cloud'});assert.equal(r.score,170);assert.equal(r.hit({id:12,type:'star'}).points,30);});
+test('pause freezes timer and combo; expiry resets it',()=>{const r=new Round('challenge');r.hit({id:1,type:'bubble'});r.tick(30,false);assert.equal(r.remaining,60);assert.equal(r.streak,1);r.tick(2.1);assert.equal(r.streak,0);r.tick(80);assert.equal(r.hit({id:2,type:'bubble'}),null);});
+test('sweep hits between samples but rejects stale and teleported hands',()=>{const t={x:.5,y:.5,r:.01};const h={x:.6,y:.5,r:.01,confidence:1,seen:100,prev:{x:.4,y:.5,time:80}};assert.equal(handHits(h,t,110),true);assert.equal(handHits(h,t,500),false);assert.equal(handHits({...h,x:.9,prev:{x:.1,y:.5,time:80}},t,110),false);});
+test('gentle rewards count pops, independent of multipliers',()=>{const r=new Round('gentle');for(let i=0;i<10;i++)r.hit({id:i,type:'bubble'});assert.equal(r.score,100);assert.equal(rewardLevel(r.pops),1);r.hit({id:11,type:'cloud'});assert.equal(r.score,100);assert.equal(rewardLevel(45),3);});
+test('pose array reorder does not swap positional slots',()=>{const pose=x=>Array.from({length:33},()=>({x,y:.5}));const matches=matchPoses([{cx:.2,cy:.5,id:1},{cx:.8,cy:.5,id:2}],[pose(.79),pose(.21)]);assert.equal(matches[0].old.id,2);assert.equal(matches[1].old.id,1);});

@@ -2,17 +2,29 @@
 
 ## Current status
 
-Design only; no game code or playable build exists yet. Read GAME_DESIGN.md first. Its rules and numeric values are proposals for playtesting. The latest requirement is simultaneous multiplayer, initially one or two active players; older single-player-only planning is superseded.
+Prototype 0.1.0 is implemented. Read README.md for usage and TESTING.md for verified behavior and limits. GAME_DESIGN.md remains the broader design proposal.
 
-## Next steps on the Mac
+Development now takes place on a Windows PC without a camera. The user can test the hosted game from another laptop's browser without installing ChatGPT. The older personal Mac is a 2018 Intel i5 MacBook Pro with 8 GB RAM; it has not been benchmarked.
 
-1. Clone https://github.com/zhengyonglei/bubble-magic and open the local checkout in Codex.
-2. Inspect the MacBook Pro chip/year and available developer tools.
-3. Build a camera diagnostic to validate two-player pose tracking and foreground masks in Chrome before investing in game polish.
-4. Implement the minimal cooperative bubble game, then clouds, shared scoring, and wearable rewards as described in GAME_DESIGN.md.
-5. Test with the built-in webcam on the laptop first, then with an HDMI-connected TV.
+## Next steps
 
-All video processing must stay in the browser on the device. Do not record or upload camera frames. Use localhost for development and HTTPS for deployment. Keep model files, asset licenses, and GitHub Pages repository-relative URLs in mind. No GitHub Pages deployment has been configured yet.
+1. Test the live-camera path on the other laptop in Chrome. Inspect its copied diagnostics.
+2. Validate one player, then two, in the real play area; check framing, hand alignment, cutout edges, tracking loss, and responsiveness.
+3. Test different heights and natural movement, then HDMI TV display latency.
+4. Tune target reach, rate, and reward progression based on playtesting.
+5. Add explicit player admission if needed. Current prototype uses up to two detected people automatically, so bystanders must stay out of view.
+6. Test Safari and actual lower-powered hardware before claiming support/performance there.
+
+All video processing must stay in the browser on the device. Do not record or upload camera frames. Use localhost for development and HTTPS for deployment. Keep pinned model files, asset licenses, and GitHub Pages repository-relative URLs in mind. Deployment target is main / root on GitHub Pages.
+
+## Scope differences from the design proposal
+
+- No explicit raise-hand join or reliable bystander exclusion yet.
+- No untimed practice setting; there is a pre-round practice screen.
+- Accessories use simple stylized shapes with approximate body attachment.
+- The diagnostic sample image is a static-pose test, not a video or live-camera benchmark.
+- No persistent wardrobe storage, fully offline packaging, or camera selection menu.
+- No projector/ball-impact detection work.
 
 ## Workflow
 
