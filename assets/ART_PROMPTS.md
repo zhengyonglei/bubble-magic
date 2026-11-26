@@ -13,3 +13,6 @@ Use case: stylized-concept. Transparent wrist-marker sprite. Friendly symmetrica
 
 ## Coordinated sprite atlas — game-atlas-ai-v1.png
 Built-in OpenAI image generation; resized to 1024 square for delivery. Exact 4x4 cells, transparent background. Row 1: iridescent bubble, star bubble, apple, orange. Row 2: watermelon, kitten, puppy, butterfly. Row 3: cactus (no badge), jeweled crown, wearable butterfly wings, bracelet. Row 4: ivory garden mascot, lavender-shirt adult, mint-shirt child, sparkles. Premium rounded storybook painted 3D style, readable silhouettes, welcoming faces. No labels or grid. A follow-up edit removed colored haze and scattered background pixels while preserving the grid and subjects.
+
+## Hand props — hand-props-ai-v1.png
+Built-in image generator: two isolated storybook sprites on transparent background, rounded toy fruit knife with lavender handle and silver blade at left; honey-colored woven catching basket with mint bow at right. Soft painted 3D style, clean margins, no labels or threatening blade. Resized to 640 × 320 for game use.

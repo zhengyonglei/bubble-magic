@@ -30,3 +30,6 @@ Ten unit tests pass, including Easy obstacle exclusion, ordered density/speed se
 
 ## Version 0.5.0 artwork
 Shared AI sprite atlas replaces procedural targets, pets, rewards, welcome mascot, menu icons and simulated people. Existing garden background is also AI-generated. UI controls and simple particle motion remain code-rendered. Atlas failure falls back to previous Canvas illustrations. Demo people are illustrative stand-ins; they are not live tracking.
+
+## Version 0.6.0
+Tests added for bubble size variety, horizontal/vertical/diagonal cut geometry and crown threshold. Shared exactly-once scoring and Easy obstacle exclusion remain covered. Live-camera ergonomics of the new hand props still require user testing.

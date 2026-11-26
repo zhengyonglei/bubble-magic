@@ -1,4 +1,4 @@
-export const REWARDS=[{at:10,name:'Sparkle bracelets'},{at:25,name:'Star crown'},{at:45,name:'Butterfly wings'}];
+export const REWARDS=[{at:5,name:'Sparkle bracelets'},{at:15,name:'Star crown'},{at:30,name:'Butterfly wings'}];
 export const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 export function segmentHitsCircle(a,b,c,r){
   const dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy;
