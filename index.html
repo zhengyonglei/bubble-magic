@@ -31,7 +31,7 @@
       <p>Reach for bubbles. Make them pop.<br>Turn yourselves into something wonderful.</p>
       <div class="mode-picker" role="group" aria-label="Choose game difficulty">
         <button class="mode active" data-mode="gentle" aria-pressed="true"><span>☁</span><b>Gentle</b><small>Big bubbles, happy hands</small></button>
-        <button class="mode" data-mode="challenge" aria-pressed="false"><span>✧</span><b>Challenge</b><small>More sparkle, a little skill</small></button>
+        <button class="mode" data-mode="challenge" aria-pressed="false"><span>✧</span><b>Challenge</b><small>Faster bubbles. Watch for cacti!</small></button>
       </div>
       <button id="camera" class="primary">✦ &nbsp; Play with camera</button>
       <div class="alt-actions"><button id="demo">Try mouse demo</button><span>·</span><button id="video-button">Use a video</button></div>
@@ -63,12 +63,12 @@
     <label>Players<select id="players"><option value="2">Up to two, together</option><option value="1">One player</option></select></label>
     <label>Camera processing<select id="quality"><option value="balanced">Balanced · 640 × 480</option><option value="light">Lighter · 480 × 360</option></select></label>
     <label class="switch-row"><span>Magic cutout<small>Hide the room behind you</small></span><input id="cutout" type="checkbox" checked></label>
-    <label class="switch-row"><span>Sleepy clouds<small>Hands off! In Challenge, they reset your combo.</small></span><input id="hazards" type="checkbox"></label>
+    <label class="switch-row"><span>Prickly cacti<small>Challenge only: lose up to 20 points and reset your combo.</small></span><input id="hazards" type="checkbox"></label>
     <label>Target height<select id="height"><option value="auto">Follow the players</option><option value="low">Lower · easier to reach</option></select></label>
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.1.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.2.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>

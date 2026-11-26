@@ -2,11 +2,11 @@
 
 A cooperative, browser-only bubble game: move your hands, pop bubbles, and earn sparkle bracelets, a crown, and butterfly wings.
 
-**Prototype 0.1.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.2.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
-Once GitHub Pages is enabled: **https://zhengyonglei.github.io/bubble-magic/**
+Play online: **https://zhengyonglei.github.io/bubble-magic/**
 
 Choose Gentle or Challenge, then:
 
@@ -14,7 +14,7 @@ Choose Gentle or Challenge, then:
 - **Try mouse demo:** move the pointer to pop bubbles. The two illustrated people are simulated. Arrow keys can also move the hand cursor when the game canvas has focus.
 - **Use a video:** choose a local MP4/WebM supported by your browser. It plays in a loop through the same tracking and segmentation pipeline. The file stays on the device.
 
-Settings include one/two players, lighter processing, optional background removal, cloud hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. In Challenge, sleepy clouds reset combos, not earned points. Rewards are shared and persist between rounds until reset or page reload.
+Settings include one/two players, lighter processing, optional background removal, cactus hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. In Challenge, cacti reset combos and deduct up to 20 points (score never goes below zero). Rewards are shared and persist between rounds until reset or page reload.
 
 The default is a 60-second round with practice bubbles first. When all hands are lost, the clock pauses. Taking a break ends the camera stream. Switching away from the browser tab pauses gameplay and disables camera video tracks until you return.
 

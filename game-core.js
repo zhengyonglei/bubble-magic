@@ -20,13 +20,13 @@ export class Round {
   hit(target){
     if(this.finished||this.hitIds.has(target.id))return null;
     this.hitIds.add(target.id);
-    if(target.type==='cloud'){if(this.mode==='challenge'){this.streak=0;this.multiplier=1;this.lastPop=-Infinity;}return {points:0,cloud:true};}
+    if(target.type==='cactus'){if(this.mode==='challenge'){this.streak=0;this.multiplier=1;this.lastPop=-Infinity;}const penalty=this.mode==='challenge'?Math.min(20,this.score):0;this.score-=penalty;return {points:0,cactus:true,penalty};}
     this.streak=this.time-this.lastPop<=2?this.streak+1:1;
     this.lastPop=this.time;
     this.multiplier=this.mode==='gentle'?1:this.streak>=10?3:this.streak>=5?2:1;
     const points=(target.type==='star'?30:10)*this.multiplier;
     this.score+=points;this.pops++;
-    return {points,cloud:false};
+    return {points,cactus:false};
   }
 }
 export function rewardLevel(total){return REWARDS.filter(r=>total>=r.at).length;}

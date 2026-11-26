@@ -21,3 +21,6 @@ The sample-photo check validates inference/compositing only. Mouse play does not
 4. Try two people, then Challenge. Observe crossings and lost tracking.
 5. End / take a break to release the camera. If slow, choose Lighter processing or disable cutout before a new session.
 6. Copy Settings → Testing & diagnostics and report what felt wrong. No footage is needed.
+
+## Version 0.2.0
+User confirmed live hand tracking works on their laptop. Added butterfly wrist markers, a layered garden, faster drifting bubbles and Challenge cacti. Cacti subtract up to 20 points and reset the streak; Gentle never spawns cacti. Seven gameplay tests cover the new penalty including zero-floor and duplicate collisions. Live-camera regression testing of the new visuals remains to be done.
