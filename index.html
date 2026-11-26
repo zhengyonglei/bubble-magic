@@ -4,15 +4,16 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8f6ff">
   <meta name="description" content="Move, pop, and make a little magic. A cooperative camera-powered bubble game, processed privately in your browser.">
-  <title>Bubble Magic · Move. Pop. Sparkle.</title>
+  <title>Play Garden · Move. Play. Smile.</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=0.3.0">
+  <link rel="stylesheet" href="./style.css?v=0.4.0">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Bubble Magic home"><img src="./assets/icon.svg" alt="" width="42" height="42"><span>Bubble<span class="brand-light">Magic</span><small>MOVE. POP. SPARKLE.</small></span></a>
+    <a class="brand" href="./" aria-label="Play Garden home"><img src="./assets/icon.svg" alt="" width="42" height="42"><span>Play<span class="brand-light">Garden</span><small>MOVE. PLAY. SMILE.</small></span></a>
     <div class="top-note">Little movements. Big smiles.</div>
     <nav aria-label="Game controls">
+      <button class="icon-btn" id="all-games">▦ <span>Games</span></button>
       <button class="icon-btn" id="sound" aria-label="Turn sound on" title="Sound">♫ <span>Sound off</span></button>
       <button class="icon-btn" id="fullscreen" title="Fullscreen">⛶ <span>Fullscreen</span></button>
       <button class="icon-btn" id="settings-button" aria-haspopup="dialog">⚙ <span>Settings</span></button>
@@ -22,16 +23,25 @@
     <canvas id="game" aria-label="Bubble game play area. In mouse demo, move your pointer to pop bubbles." tabindex="0"></canvas>
     <div class="sky-label" aria-hidden="true">THE BUBBLE GARDEN</div>
     <div id="hud" class="hud" hidden>
-      <div class="score-panel"><span class="eyebrow">TEAM SCORE</span><strong id="score">0</strong><span id="pop-count">0 bubbles popped</span></div>
+      <div class="score-panel"><span class="eyebrow">TEAM SCORE</span><strong id="score">0</strong><span id="pop-count">0 items collected</span></div>
       <div class="round-panel"><span id="source-badge">MOUSE DEMO</span><div class="timer"><span aria-hidden="true">◷</span> <strong id="time">1:00</strong></div><span id="combo">Let's make magic</span></div>
     </div>
+    <section id="suite-menu" class="suite-menu" aria-labelledby="suite-title">
+      <span class="pill">LITTLE MOVEMENTS. BIG ADVENTURES.</span><h1 id="suite-title">What shall we<br><em>play today?</em></h1><p>Pick a game. Bring your hands. Make some magic.</p>
+      <div class="game-grid">
+        <button class="game-card bubble-card" data-game="bubbles"><span class="game-art">🫧</span><b>Bubble Magic</b><span>Reach, pop, sparkle.</span><small>Floating bubbles · butterfly hands</small></button>
+        <button class="game-card fruit-card" data-game="fruit"><span class="game-art">🍉</span><b>Fruit Slice</b><span>A juicy little adventure.</span><small>Swipe through flying fruit</small></button>
+        <button class="game-card pet-card" data-game="pets"><span class="game-art">🐱 🐶</span><b>Cats &amp; Dogs Catch</b><span>It's raining little friends!</span><small>Reach out and catch them</small></button>
+      </div><p class="suite-note">1–2 players · Camera or mouse · Three difficulty levels<br>Video stays on your device. No recording.</p>
+    </section>
     <section class="welcome" id="welcome" aria-labelledby="welcome-title">
-      <span class="pill">A LITTLE PLAY, TOGETHER</span>
+      <button class="text-btn" id="choose-game">All games</button>
       <h1 id="welcome-title">You bring<br>the <em>magic.</em></h1>
-      <p>Reach for bubbles. Make them pop.<br>Turn yourselves into something wonderful.</p>
+      <p id="game-description">Reach for bubbles. Make them pop.</p>
       <div class="mode-picker" role="group" aria-label="Choose game difficulty">
-        <button class="mode active" data-mode="gentle" aria-pressed="true"><span>☁</span><b>Gentle</b><small>Big bubbles, happy hands</small></button>
-        <button class="mode" data-mode="challenge" aria-pressed="false"><span>✧</span><b>Challenge</b><small>Faster bubbles. Watch for cacti!</small></button>
+        <button class="mode active" data-mode="easy" aria-pressed="true"><b>Easy</b><small>Few &amp; slow<br>No obstacles</small></button>
+        <button class="mode" data-mode="medium" aria-pressed="false"><b>Medium</b><small>More &amp; faster<br>A few cacti</small></button>
+        <button class="mode" data-mode="hard" aria-pressed="false"><b>Hard</b><small>Lots &amp; speedy<br>More cacti</small></button>
       </div>
       <button id="camera" class="primary">✦ &nbsp; Play with camera</button>
       <div class="alt-actions"><button id="demo">Try mouse demo</button><span>·</span><button id="video-button">Use a video</button></div>
@@ -47,14 +57,14 @@
     <div class="play-controls" id="play-controls" hidden><button id="pause">Pause</button><button id="stop">End &amp; stop camera</button></div>
     <section id="results" class="result-card" aria-labelledby="result-title" hidden>
       <div class="result-star">✦</div><span class="pill">LOOK WHAT YOU MADE!</span><h2 id="result-title">A little more magic.</h2>
-      <div class="result-numbers"><div><strong id="final-score">0</strong><span>team points</span></div><div><strong id="final-pops">0</strong><span>bubbles popped</span></div></div>
+      <div class="result-numbers"><div><strong id="final-score">0</strong><span>team points</span></div><div><strong id="final-pops">0</strong><span>items collected</span></div></div>
       <p id="final-rewards">Keep popping to dress up your next round.</p>
       <button class="primary" id="again">Another round</button><button class="text-btn" id="finish">Take a break &amp; stop camera</button>
     </section>
     <footer class="reward-rail"><div class="reward-label"><span class="eyebrow">A LITTLE MAGIC TO EARN</span><span id="reward-caption">Pop together. Dress up together.</span></div>
-      <div class="reward" data-reward="10"><span class="reward-icon">✧</span><div><b>Sparkle bracelets</b><small>10 bubbles</small></div></div>
-      <div class="reward" data-reward="25"><span class="reward-icon">♛</span><div><b>Star crown</b><small>25 bubbles</small></div></div>
-      <div class="reward" data-reward="45"><span class="reward-icon">ʚɞ</span><div><b>Butterfly wings</b><small>45 bubbles</small></div></div>
+      <div class="reward" data-reward="10"><span class="reward-icon">✧</span><div><b>Sparkle bracelets</b><small>10 catches</small></div></div>
+      <div class="reward" data-reward="25"><span class="reward-icon">♛</span><div><b>Star crown</b><small>25 catches</small></div></div>
+      <div class="reward" data-reward="45"><span class="reward-icon">ʚɞ</span><div><b>Butterfly wings</b><small>45 catches</small></div></div>
     </footer>
   </main>
   <dialog id="settings">
@@ -63,16 +73,16 @@
     <label>Players<select id="players"><option value="2">Up to two, together</option><option value="1">One player</option></select></label>
     <label>Camera processing<select id="quality"><option value="balanced">Balanced · 640 × 480</option><option value="light">Lighter · 480 × 360</option></select></label>
     <label class="switch-row"><span>Magic cutout<small>Hide the room behind you</small></span><input id="cutout" type="checkbox" checked></label>
-    <label class="switch-row"><span>Prickly cacti<small>Challenge only: lose up to 20 points and reset your combo.</small></span><input id="hazards" type="checkbox"></label>
+    <label class="switch-row"><span>Prickly cacti<small>Medium / Hard only: lose up to 20 points and reset your combo. Easy never has obstacles.</small></span><input id="hazards" type="checkbox"></label>
     <label>Target height<select id="height"><option value="auto">Follow the players</option><option value="low">Lower · easier to reach</option></select></label>
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.3.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.4.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>
   <noscript>This game needs JavaScript enabled in your browser.</noscript>
-  <script type="module" src="./app.js?v=0.3.0"></script>
+  <script type="module" src="./app.js?v=0.4.0"></script>
 </body>
 </html>

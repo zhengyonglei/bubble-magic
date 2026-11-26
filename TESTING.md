@@ -24,3 +24,6 @@ The sample-photo check validates inference/compositing only. Mouse play does not
 
 ## Version 0.2.0
 User confirmed live hand tracking works on their laptop. Added butterfly wrist markers, a layered garden, faster drifting bubbles and Challenge cacti. Cacti subtract up to 20 points and reset the streak; Gentle never spawns cacti. Seven gameplay tests cover the new penalty including zero-floor and duplicate collisions. Live-camera regression testing of the new visuals remains to be done.
+
+## Version 0.4.0
+Ten unit tests pass, including Easy obstacle exclusion, ordered density/speed settings, distinct movement directions, fruit arcs and swipe gating. Browser QA covers game-menu navigation, Fruit Slice scoring and split animation, pet gameplay and cactus appearance. New game camera ergonomics and difficulty tuning need user playtesting.

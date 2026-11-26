@@ -1,20 +1,20 @@
-# Bubble Magic
+# Play Garden
 
-A cooperative, browser-only bubble game: move your hands, pop bubbles, and earn sparkle bracelets, a crown, and butterfly wings.
+A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.3.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.4.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
 Play online: **https://zhengyonglei.github.io/bubble-magic/**
 
-Choose Gentle or Challenge, then:
+Pick a game, choose Easy, Medium, or Hard, then:
 
 - **Play with camera:** allow camera access, stand with head and hands visible, and press Start round after tracking finds you. Keep only one or two players in view; anyone detected may become a player in this prototype. No automatic bystander exclusion or raise-hand admission yet.
 - **Try mouse demo:** move the pointer to pop bubbles. The two illustrated people are simulated. Arrow keys can also move the hand cursor when the game canvas has focus.
 - **Use a video:** choose a local MP4/WebM supported by your browser. It plays in a loop through the same tracking and segmentation pipeline. The file stays on the device.
 
-Settings include one/two players, lighter processing, optional background removal, cactus hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. In Challenge, cacti reset combos and deduct up to 20 points (score never goes below zero). Rewards are shared and persist between rounds until reset or page reload.
+Settings include one/two players, lighter processing, optional background removal, cactus hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. On Medium and Hard, cacti reset combos and deduct up to 20 points (score never goes below zero). Rewards are shared and persist between rounds until reset or page reload.
 
 The default is a 60-second round with practice bubbles first. When all hands are lost, the clock pauses. Taking a break ends the camera stream. Switching away from the browser tab pauses gameplay and disables camera video tracks until you return.
 
@@ -67,3 +67,15 @@ Publish from **main / (root)** under repository Settings → Pages. `.nojekyll` 
 - [Game design](GAME_DESIGN.md)
 - [Development handoff and remaining work](PROJECT_HANDOFF.md)
 - [Validation notes](TESTING.md)
+
+## Games and difficulty (0.4.0)
+
+- Bubble Magic: touch floating bubbles.
+- Fruit Slice: swipe a moving hand through arcing fruit to split it. Standing still does not slice.
+- Cats & Dogs Catch: touch falling animal friends. Misses float offscreen without an injury animation or point deduction.
+- Cacti have no bubble border. Orange warning ticks and a HANDS OFF label distinguish them.
+- Easy: at most 5 targets, one spawn per 1.1 seconds, slow movement, no obstacles.
+- Medium: at most 8 targets, one spawn per 0.72 seconds, faster movement, occasional cacti.
+- Hard: at most 12 targets, one spawn per 0.43 seconds, fastest movement, more frequent cacti.
+
+Limits count all targets; placement may delay a spawn to avoid overlaps. Settings can disable obstacles on Medium/Hard but cannot enable them on Easy. Games returns to the suite menu and releases camera access. Difficulty remains selected when changing games. The new fruit and pet games are first playable prototypes using Canvas illustrations; live camera playtesting is still needed.

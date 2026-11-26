@@ -2,7 +2,7 @@
 
 ## Current status
 
-Prototype 0.3.0 is implemented. Read README.md for usage and TESTING.md for verified behavior and limits. GAME_DESIGN.md remains the broader design proposal.
+Prototype 0.4.0 is implemented. Read README.md for usage and TESTING.md for verified behavior and limits. GAME_DESIGN.md remains the broader design proposal.
 
 Development now takes place on a Windows PC without a camera. The user can test the hosted game from another laptop's browser without installing ChatGPT. The older personal Mac is a 2018 Intel i5 MacBook Pro with 8 GB RAM; it has not been benchmarked.
 
@@ -29,3 +29,6 @@ All video processing must stay in the browser on the device. Do not record or up
 ## Workflow
 
 Commit code, setup instructions, tested behavior, and remaining issues so development can move between computers. Do not commit personal camera recordings, secrets, or machine-specific credentials. Verify performance on the actual Mac; mouse simulation and prerecorded input cannot establish live-camera performance.
+
+## Suite expansion (0.4.0)
+Play Garden is the suite name; existing repository and Pages URL are unchanged. Three games are playable. game-modes.js owns difficulty values and movement rules. Next: live camera playtest of fruit swipes and pet reach zones; tune speeds for the two children; consider per-game themes and generated fruit/pet sprites.
