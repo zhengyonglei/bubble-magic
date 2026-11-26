@@ -27,3 +27,6 @@ User confirmed live hand tracking works on their laptop. Added butterfly wrist m
 
 ## Version 0.4.0
 Ten unit tests pass, including Easy obstacle exclusion, ordered density/speed settings, distinct movement directions, fruit arcs and swipe gating. Browser QA covers game-menu navigation, Fruit Slice scoring and split animation, pet gameplay and cactus appearance. New game camera ergonomics and difficulty tuning need user playtesting.
+
+## Version 0.5.0 artwork
+Shared AI sprite atlas replaces procedural targets, pets, rewards, welcome mascot, menu icons and simulated people. Existing garden background is also AI-generated. UI controls and simple particle motion remain code-rendered. Atlas failure falls back to previous Canvas illustrations. Demo people are illustrative stand-ins; they are not live tracking.

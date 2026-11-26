@@ -2,7 +2,7 @@
 
 A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.4.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.5.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
@@ -68,7 +68,7 @@ Publish from **main / (root)** under repository Settings → Pages. `.nojekyll` 
 - [Development handoff and remaining work](PROJECT_HANDOFF.md)
 - [Validation notes](TESTING.md)
 
-## Games and difficulty (0.4.0)
+## Games and difficulty (0.5.0)
 
 - Bubble Magic: touch floating bubbles.
 - Fruit Slice: swipe a moving hand through arcing fruit to split it. Standing still does not slice.
@@ -78,4 +78,7 @@ Publish from **main / (root)** under repository Settings → Pages. `.nojekyll` 
 - Medium: at most 8 targets, one spawn per 0.72 seconds, faster movement, occasional cacti.
 - Hard: at most 12 targets, one spawn per 0.43 seconds, fastest movement, more frequent cacti.
 
-Limits count all targets; placement may delay a spawn to avoid overlaps. Settings can disable obstacles on Medium/Hard but cannot enable them on Easy. Games returns to the suite menu and releases camera access. Difficulty remains selected when changing games. The new fruit and pet games are first playable prototypes using Canvas illustrations; live camera playtesting is still needed.
+Limits count all targets; placement may delay a spawn to avoid overlaps. Settings can disable obstacles on Medium/Hard but cannot enable them on Easy. Games returns to the suite menu and releases camera access. Difficulty remains selected when changing games. The new fruit and pet games are first playable prototypes using AI-generated sprites rendered on Canvas; live camera playtesting is still needed.
+
+## Artwork (0.5.0)
+The garden and all principal game illustrations are AI-generated: bubble/star targets, fruit, pets, cactus, butterfly markers, crown/wings/bracelet rewards, mascot, demo characters and menu art. The 4×4 transparent atlas is shared by Canvas and CSS; selected sprite crops exclude neighboring artwork. UI text, controls and lightweight particles stay code-rendered. The atlas is 1.43 MB and loads once; older illustrations remain as Canvas fallbacks. Prompts are in assets/ART_PROMPTS.md.
