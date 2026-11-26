@@ -2,7 +2,7 @@
 
 A browser-only movement game suite: Bubble Magic, Fruit Slice, and Cats & Dogs Catch. All share webcam tracking, mouse/video inputs and dress-up rewards.
 
-**Prototype 0.6.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
+**Prototype 0.7.0.** Live performance and tracking quality with children still need testing. No application installation is required on the computer used to play.
 
 ## Play
 
@@ -10,13 +10,13 @@ Play online: **https://zhengyonglei.github.io/bubble-magic/**
 
 Pick a game, choose Easy, Medium, or Hard, then:
 
-- **Play with camera:** allow camera access, stand with head and hands visible, and press Start round after tracking finds you. Keep only one or two players in view; anyone detected may become a player in this prototype. No automatic bystander exclusion or raise-hand admission yet.
-- **Try mouse demo:** move the pointer to pop bubbles. The two illustrated people are simulated. Arrow keys can also move the hand cursor when the game canvas has focus.
+- **Play with camera:** allow camera access, stand with head and hands visible, and hold ready for the automatic 3-second countdown. Keep only one or two players in view; anyone detected may become a player in this prototype. No automatic bystander exclusion or raise-hand admission yet.
+- **Try mouse demo:** move the pointer to pop bubbles. The illustrated player(s) are simulated. Arrow keys can also move the hand cursor when the game canvas has focus.
 - **Use a video:** choose a local MP4/WebM supported by your browser. It plays in a loop through the same tracking and segmentation pipeline. The file stays on the device.
 
 Settings include one/two players, lighter processing, optional background removal, cactus hazards, lower targets, and a diagnostic report you can copy. Camera-processing changes apply to the next camera/video session. On Medium and Hard, cacti reset combos and deduct up to 20 points (score never goes below zero). Rewards are shared and persist between rounds until reset or page reload.
 
-The default is a 60-second round with practice bubbles first. When all hands are lost, the clock pauses. Taking a break ends the camera stream. Switching away from the browser tab pauses gameplay and disables camera video tracks until you return.
+The default is a 60-second round after a 3-second countdown. When all hands are lost, the clock pauses. Taking a break ends the camera stream. Switching away from the browser tab pauses gameplay and disables camera video tracks until you return.
 
 ## Test on a work laptop
 
@@ -85,3 +85,9 @@ The garden and all principal game illustrations are AI-generated: bubble/star ta
 
 ## Version 0.6.0
 Solo and Together are available on each game setup screen; Solo tracks one person and Together up to two. Both share one score and one wardrobe. Difficulty controls obstacles independently of player count; practice has no cacti. Wrist props are butterfly (bubbles), rounded toy knife (fruit), and basket (pets). Bubble targets cycle small/regular/large sizes with matching hitboxes. Fruit split lines use the colliding hand path in screen pixels, and halves separate perpendicular to that line. Rewards unlock at 5/15/30 shared catches (bracelets/crown/wings); progress carries across rounds and games until reload/reset. Settings offers a clearly marked reward preview without granting unlocks.
+
+## Version 0.7.0 gameplay
+
+Scores are prominent and every successful target shows +points where it was collected. The pre-round unscored practice phase is replaced by an automatic countdown. Reward bars fill after each catch: bracelets at 5, crown at 15, wings at 30. Unlocks apply to everyone and last across games/rounds in this page session.
+
+Medium/Hard schedule cacti after about 4/3 active seconds, subject to safe placement and a maximum of two on screen; Solo and Together use the same rules. Easy has none. Fruit sizes differ: oranges < apples < watermelons. Animals have full-body artwork. Hold the larger basket under a falling animal: entry through the top scores; side contact bounces without points.

@@ -16,3 +16,10 @@ Built-in OpenAI image generation; resized to 1024 square for delivery. Exact 4x4
 
 ## Hand props — hand-props-ai-v1.png
 Built-in image generator: two isolated storybook sprites on transparent background, rounded toy fruit knife with lavender handle and silver blade at left; honey-colored woven catching basket with mint bow at right. Soft painted 3D style, clean margins, no labels or threatening blade. Resized to 640 × 320 for game use.
+
+## Full-body pets — cat-full-body-ai-v1.png, dog-full-body-ai-v1.png
+Built-in imagegen; separate transparent square outputs, resized to 384 square preserving alpha.
+
+Cat prompt: Use case: stylized-concept. Asset type: transparent game sprite. A single adorable full-body orange tabby kitten gently falling feet first, facing forward, all four paws, fluffy tail and complete torso visible. Soft polished storybook 3D illustration for a cheerful pastel children's garden game, rounded proportions, happy calm face, clearly readable silhouette. Centered isolated character filling 80 percent of square canvas. Actual transparent background, no scenery, no floor, no shadow plane, no text or accessories.
+
+Dog prompt: Use case: stylized-concept. Asset type: transparent game sprite. A single adorable full-body golden brown puppy gently falling feet first, facing forward, all four paws, floppy ears, wagging tail and complete torso visible. Soft polished storybook 3D illustration for a cheerful pastel children's garden game, rounded proportions, happy calm face, clearly readable silhouette. Centered isolated character filling 80 percent of square canvas. Actual transparent background, no scenery, no floor, no shadow plane, no text or accessories.

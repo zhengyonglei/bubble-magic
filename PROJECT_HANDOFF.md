@@ -2,7 +2,7 @@
 
 ## Current status
 
-Prototype 0.6.0 is implemented. Read README.md for usage and TESTING.md for verified behavior and limits. GAME_DESIGN.md remains the broader design proposal.
+Prototype 0.7.0 is implemented. Read README.md for usage and TESTING.md for verified behavior and limits. GAME_DESIGN.md remains the broader design proposal.
 
 Development now takes place on a Windows PC without a camera. The user can test the hosted game from another laptop's browser without installing ChatGPT. The older personal Mac is a 2018 Intel i5 MacBook Pro with 8 GB RAM; it has not been benchmarked.
 
@@ -20,8 +20,8 @@ All video processing must stay in the browser on the device. Do not record or up
 ## Scope differences from the design proposal
 
 - No explicit raise-hand join or reliable bystander exclusion yet.
-- No untimed practice setting; there is a pre-round practice screen.
-- Accessories use simple stylized shapes with approximate body attachment.
+- No untimed practice setting; a 3-second hands-present countdown starts scored play automatically.
+- Accessories use AI artwork with approximate body attachment.
 - The diagnostic sample image is a static-pose test, not a video or live-camera benchmark.
 - No persistent wardrobe storage, fully offline packaging, or camera selection menu.
 - No projector/ball-impact detection work.
