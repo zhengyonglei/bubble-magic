@@ -6,7 +6,7 @@
   <meta name="description" content="Move, pop, and make a little magic. A cooperative camera-powered bubble game, processed privately in your browser.">
   <title>Play Garden · Move. Play. Smile.</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=0.7.0">
+  <link rel="stylesheet" href="./style.css?v=0.7.1">
 </head>
 <body>
   <header class="topbar">
@@ -79,11 +79,11 @@
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <label class="switch-row"><span>Preview all rewards<small>Try on the crown, wings and bracelets without changing your score. Start a camera or mouse session to see them.</small></span><input id="preview-rewards" type="checkbox"></label><button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.7.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.7.1 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>
   <noscript>This game needs JavaScript enabled in your browser.</noscript>
-  <script type="module" src="./app.js?v=0.7.0"></script>
+  <script type="module" src="./app.js?v=0.7.1"></script>
 </body>
 </html>

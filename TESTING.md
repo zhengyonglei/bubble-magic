@@ -38,3 +38,6 @@ Tests added for bubble size variety, horizontal/vertical/diagonal cut geometry a
 21 automated tests pass. New integration tests execute the production app update loop with synthetic inputs and a minimal DOM: all three games auto-start and score; floating +10 labels appear; bars fill and unlock crown/wings; Solo Medium/Hard spawn hazards and Easy excludes them; side contacts bounce without scoring. Pure tests cover fruit size ordering and basket entry direction.
 
 Browser mouse-mode play testing: Bubble Magic scored 50 and a cactus reduced it to 30; Fruit Slice scored 10 from a horizontally split watermelon; Cats & Dogs scored 20 from top-entry catches and displayed Boing on side hits without increasing the score. Pause froze the round. Full-body sprites, larger basket, distinct fruit sizes, visible score and reward bars inspected. Live camera, two real players, TV latency and older Mac performance remain untested in this change.
+
+## Version 0.7.1
+22 tests pass, including catch animation lifetime, full-size retention, pause behavior and exactly-once scoring. Browser mouse testing confirmed no illustrated player, larger animals, a puppy visibly descending and sitting behind the basket front, and score increasing once per catch. Saved preview captures the puppy inside the basket. Camera regression remains untested.

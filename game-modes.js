@@ -17,7 +17,7 @@ export function swipeCut(hand,target,width,height){const a=hand.prev||hand;const
 
 // Shared radii keep rendering, collision and sliced halves consistent.
 export function fruitSize(kind){return [1.4,1.2,2.15][kind];}
-export function basketGeometry(hand,width,height){return {x:hand.x*width,rim:hand.y*height,halfWidth:Math.max(62,Math.min(100,height*.12)),depth:Math.max(62,Math.min(100,height*.12))};}
+export function basketGeometry(hand,width,height){return {x:hand.x*width,rim:hand.y*height,halfWidth:Math.max(80,Math.min(125,height*.15)),depth:Math.max(80,Math.min(125,height*.15))};}
 export function basketContact(target,hand,width,height,now){
  if(!target.prev||now-hand.seen>350||hand.confidence<.45)return null;
  const b=basketGeometry(hand,width,height),radius=target.r*height;
