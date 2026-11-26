@@ -37,3 +37,5 @@ Play Garden is the suite name; existing repository and Pages URL are unchanged. 
 Visible Solo/Together controls, shared score, AI knife/basket wrist props, varied bubble hitboxes, swipe-aligned fruit cuts, and clearer rewards at 5/15/30 catches. Preview rewards does not grant progress. Solo defaults on page load. Test props and directional slicing with real webcam; code and mouse tests do not establish live tracking feel.
 
 Latest: 0.10.0 adds original Web Audio melodies (`music.js`), visible fullscreen controls with expanded-view fallback, and expanded regression coverage plus `.github/workflows/tests.yml`. Music is opt-in and muted outside active rounds.
+
+Latest: 0.11.0 replaces pet baskets with separate hand-to-hand nets for every player. JumpTracker in tree-game.js detects torso rise/landing; either player advances shared tree growth. Four jumps from an empty tree release the first two treasures. Branch items ease toward growth/opacity targets; only further jumps release mature items. Cats, dogs, apples and oranges score shared points; no pet-game cacti. Demo Jump! button or Space simulates a jump.

@@ -106,3 +106,7 @@ Version 0.9.1: fruit launches fully outside the left/right edges at a lower-midd
 Use **Fullscreen** in the top bar for TV play; use **Exit fullscreen** or Escape to return. Unsupported browsers get an expanded play area. Tap **Music off** to enable original gentle background melodies and game sounds. Music plays during active rounds and stops on pause, hidden tabs, menus and round end.
 
 Regression checks run with `npm test` and `npm run check`, and automatically on GitHub pushes and pull requests.
+
+### Jump & catch tree (0.11.0)
+Cats & Dogs Catch now grows treasures with jumps. Each player has a separate net between their wrists; either player can jump or catch. First jumps gradually reveal cats, dogs, apples and oranges in the branches. Repeated jumps release mature treasures. Any contact with the net catches them, awards shared points, and shows them settling before fading. Solo and Together are supported.
+Mouse: move the pointer for a net; use Jump! or Space to simulate jumping. Touch: one finger moves the net, two fingers set its endpoints; tap Jump! to advance the tree. Camera jump detection uses torso rise and landing, so keep shoulders and hips visible.

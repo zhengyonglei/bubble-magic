@@ -64,3 +64,6 @@ Restored butterfly renderer accidentally removed in 0.9.0. Added production draw
 ## 0.10.0 — Rendering, fullscreen and music coverage
 Added complete-round draw checks across all games, difficulty levels and loaded/fallback artwork; camera-pose reward rendering; fullscreen enter/exit/fallback/Escape; audio initialization failures; opt-in music, pause, hidden-tab and end-round muting; bounded music scheduling after suspension. GitHub Actions runs syntax checks and all tests on pushes and pull requests.
 Browser smoke test: fullscreen layout, active butterfly input and scoring, music on/off, pause and fullscreen exit; no console errors. Audio scheduling is tested with an AudioContext test double; actual speaker sound and HDMI hardware were not verified.
+
+## 0.11.0 — Jump-grown treasure tree
+Regression tests cover torso rise/landing, jitter and tracking loss, two independent nets, side/mesh contact, fast object and net sweeps, gradual tree growth and repeated-jump release, shared scoring, pause, and camera-pose integration. Full-round draw tests exercise the growing tree and caught treasures. Browser smoke test checked successive Jump! presses reveal, grow and release treasures, and net catches add points. Live physical jumps and two-person webcam performance still need laptop testing.

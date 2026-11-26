@@ -6,10 +6,10 @@ export const LEVELS={
 export const GAMES={
  bubbles:{title:'Bubble Magic',icon:'🫧',description:'Reach for floating bubbles and make them pop.',verb:'popped',noun:'bubbles'},
  fruit:{title:'Fruit Slice',icon:'🍉',description:'Swipe through fruit tossed into the air. Leave a glowing trail!',verb:'sliced',noun:'fruit'},
- pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Hold both hands out and move the basket between them to catch falling friends.',verb:'caught',noun:'friends'}
+ pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Jump to make animals and fruit appear in the tree. Keep jumping to shake them loose, then catch with your hand-held net!',verb:'caught',noun:'treasures'}
 };
 export function isHazard(level,count,enabled=true){const n=LEVELS[level].hazardEvery;return enabled&&n>0&&count%n===n-1;}
-export function moveTarget(t,dt,game,level){const p=LEVELS[level];t.life+=dt;if(t.tossed){t.y+=t.vy*dt+.5*t.gravity*dt*dt;t.vy+=t.gravity*dt;t.x+=t.vx*dt;return;}if(t.blown){t.x+=t.vx*dt;t.y+=Math.sin(t.life*1.8+t.seed)*dt*.018;return;}if(game==='pets'){t.y+=dt*p.speed*1.8;t.x+=dt*(t.vx+Math.sin(t.life*2+t.seed)*p.drift*.3);t.vx*=Math.exp(-dt*1.5);}else if(game==='fruit'){t.vy+=dt*p.speed*.65;t.y+=t.vy*dt;t.x+=t.vx*dt;}else{const k=t.type==='cactus'?.35:1;t.y-=dt*p.speed*k;t.x+=dt*(t.vx+Math.cos(t.life*2+t.seed)*p.drift*.5)*k;}if(t.x<.08||t.x>.92){t.x=Math.max(.08,Math.min(.92,t.x));t.vx=-t.vx;}}
+export function moveTarget(t,dt,game,level){const p=LEVELS[level];t.life+=dt;if(t.treeDrop){t.y+=t.vy*dt+.5*t.gravity*dt*dt;t.vy+=t.gravity*dt;t.x+=t.vx*dt;return;}if(t.tossed){t.y+=t.vy*dt+.5*t.gravity*dt*dt;t.vy+=t.gravity*dt;t.x+=t.vx*dt;return;}if(t.blown){t.x+=t.vx*dt;t.y+=Math.sin(t.life*1.8+t.seed)*dt*.018;return;}if(game==='pets'){t.y+=dt*p.speed*1.8;t.x+=dt*(t.vx+Math.sin(t.life*2+t.seed)*p.drift*.3);t.vx*=Math.exp(-dt*1.5);}else if(game==='fruit'){t.vy+=dt*p.speed*.65;t.y+=t.vy*dt;t.x+=t.vx*dt;}else{const k=t.type==='cactus'?.35:1;t.y-=dt*p.speed*k;t.x+=dt*(t.vx+Math.cos(t.life*2+t.seed)*p.drift*.5)*k;}if(t.x<.08||t.x>.92){t.x=Math.max(.08,Math.min(.92,t.x));t.vx=-t.vx;}}
 export function canSlice(hand,now){return hand.prev&&now-hand.prev.time<250&&Math.hypot(hand.x-hand.prev.x,hand.y-hand.prev.y)>.002;}
 
 export function bubbleSize(index){return [.78,1,1.3,1,.78,1.3][index%6];}

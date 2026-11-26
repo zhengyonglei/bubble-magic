@@ -6,7 +6,7 @@
   <meta name="description" content="Move, pop, and make a little magic. A cooperative camera-powered bubble game, processed privately in your browser.">
   <title>Play Garden · Move. Play. Smile.</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=0.10.0">
+  <link rel="stylesheet" href="./style.css?v=0.11.0">
 </head>
 <body>
   <header class="topbar">
@@ -31,7 +31,7 @@
       <div class="game-grid">
         <button class="game-card bubble-card" data-game="bubbles"><span class="game-art atlas-icon sprite-bubble" aria-hidden="true"></span><b>Bubble Magic</b><span>Reach, pop, sparkle.</span><small>Floating bubbles · butterfly hands</small></button>
         <button class="game-card fruit-card" data-game="fruit"><span class="game-art atlas-icon sprite-melon" aria-hidden="true"></span><b>Fruit Slice</b><span>A juicy little adventure.</span><small>Swipe through flying fruit</small></button>
-        <button class="game-card pet-card" data-game="pets"><span class="game-art pet-icons" aria-hidden="true"><i class="atlas-icon sprite-cat"></i><i class="atlas-icon sprite-dog"></i></span><b>Cats &amp; Dogs Catch</b><span>It's raining little friends!</span><small>Reach out and catch them</small></button>
+        <button class="game-card pet-card" data-game="pets"><span class="game-art pet-icons" aria-hidden="true"><i class="atlas-icon sprite-cat"></i><i class="atlas-icon sprite-dog"></i></span><b>Cats &amp; Dogs Catch</b><span>Jump, stretch, catch!</span><small>Jump to shake · everyone catches</small></button>
       </div><p class="suite-note">1–2 players · Camera, mouse or touch · Play together<br>Video stays on your device. No recording.</p>
     </section>
     <section class="welcome" id="welcome" aria-labelledby="welcome-title">
@@ -55,7 +55,7 @@
       <div><b id="ready-title">Find your hands</b><span id="ready-description">Stand side by side with your head and hands in view.</span></div>
       <button class="primary" id="start-round" disabled>Start round</button>
     </div>
-    <div class="play-controls" id="play-controls" hidden><button id="pause">Pause</button><button id="stop">End &amp; stop camera</button></div>
+    <div class="play-controls" id="play-controls" hidden><button id="shake-tree" hidden>Jump!</button><button id="pause">Pause</button><button id="stop">End &amp; stop camera</button></div>
     <section id="results" class="result-card" aria-labelledby="result-title" hidden>
       <div class="result-star atlas-icon sprite-sparkles" aria-hidden="true"></div><span class="pill">LOOK WHAT YOU MADE!</span><h2 id="result-title">A little more magic.</h2>
       <div class="result-numbers"><div><strong id="final-score">0</strong><span>team points</span></div><div><strong id="final-pops">0</strong><span>items collected</span></div></div>
@@ -79,11 +79,11 @@
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <label class="switch-row"><span>Preview all rewards<small>Try on the crown, wings and bracelets without changing your score. Start a camera or mouse session to see them.</small></span><input id="preview-rewards" type="checkbox"></label><button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.10.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.11.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>
   <noscript>This game needs JavaScript enabled in your browser.</noscript>
-  <script type="module" src="./app.js?v=0.10.0"></script>
+  <script type="module" src="./app.js?v=0.11.0"></script>
 </body>
 </html>
