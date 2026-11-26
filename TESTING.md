@@ -70,3 +70,6 @@ Regression tests cover torso rise/landing, jitter and tracking loss, two indepen
 
 ## 0.11.1 — Grounded tree
 Tree roots now sit at the garden ground line with a contact shadow. Shaking pivots at the roots. Treasure branch positions follow the taller canopy.
+
+## 0.11.2 — Full-area camera
+Camera video/cutout and pose coordinates share full-canvas bounds for all games. Preserve both camera edges without a centered letterbox or reserved bottom strip. Request a widescreen camera stream when available; inference remains downscaled. Regression coverage includes mirrored camera edges and center on TV, desktop and portrait layouts.

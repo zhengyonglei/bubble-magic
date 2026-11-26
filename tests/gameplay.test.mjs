@@ -109,3 +109,12 @@ test('paused and ended tree rounds ignore jump input',()=>{
 test('camera torso jump advances tree while a stationary player does not',()=>{
  const g=game();g.run("selectedGame='pets';baseSession('camera');startRound();const p=Array.from({length:33},(_,i)=>({x:i%2?.4:.6,y:i>=23?.7:.5,visibility:1}));updatePlayers([p],100);updatePlayers([p],116);step(.016,116);step(.016,132);");assert.equal(g.run('treeItems.length'),0);g.run("const raised=p.map(v=>({...v,y:v.y-.12}));updatePlayers([raised],200);step(.016,200)");assert.equal(g.run('treeItems.length'),2);g.run('step(.016,216)');assert.equal(g.run('treeItems.length'),2);
 });
+
+
+test('all games map the complete camera frame to the full play area at every aspect ratio',()=>{
+ for(const type of ['bubbles','fruit','pets'])for(const [width,height] of [[1920,1016],[1000,600],[390,772]]){
+ const g=game();g.run("selectedGame='"+type+"';W="+width+";H="+height+";frameCanvas.width=640;frameCanvas.height=480;");
+ assert.equal(g.run('imageRect().w'),width);assert.equal(g.run('imageRect().h'),height);assert.equal(g.run('imageRect().x'),0);assert.equal(g.run('imageRect().y'),0);
+ assert.equal(g.run('screenPoint({x:0,y:0}).x'),1);assert.equal(g.run('screenPoint({x:1,y:1}).x'),0);assert.equal(g.run('screenPoint({x:1,y:1}).y'),1);assert.equal(g.run('screenPoint({x:.5,y:.5}).x'),.5);
+ }
+});
