@@ -1,16 +1,16 @@
-import {FruitRemix,drawJuicyHalf,remixSliceSound} from './fruit-remix.js?v=0.13.0';
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.13.0';
+import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.13.1';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.13.1';
 import {GardenMusic} from './music.js?v=0.12.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.13.0';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.13.1';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.13.0';
+const BUILD='0.13.1';
 const isFruit=()=>selectedGame==='fruit'||selectedGame==='remix';
-let remix=new FruitRemix();
+let remix=new FruitRemix(),remixRoster=new RemixRoster();
 const art={};for(const [name,file] of Object.entries({treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
@@ -39,7 +39,7 @@ function status(text,error=false){$('status').textContent=text;$('status').hidde
 function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,2800);}
 function setMode(value){difficulty=value;mode=value==='easy'?'gentle':'challenge';config.hazards=selectedGame==='fruit'&&value!=='easy';$('hazards').checked=config.hazards;$('hazards').disabled=value==='easy'||selectedGame==='pets';$('level-note').textContent=value==='easy'?'Easy: no cacti. Try Medium or Hard for obstacles.':'Cacti appear during scored rounds, even with one player.';document.querySelectorAll('[data-mode]').forEach(button=>{const selected=button.dataset.mode===value;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});}
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>setMode(button.dataset.mode));
-function chooseGame(id){selectedGame=id;$('hazard-setting').hidden=id!=='fruit';document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode('easy');}if(id==='bubbles'||id==='remix')setMode('easy');document.querySelector('.mode-picker').hidden=id!=='fruit';$('level-note').hidden=id!=='fruit';$('demo').textContent='Play with mouse or touch';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
+function chooseGame(id){selectedGame=id;$('welcome-tip').textContent=(id==='remix'?'Up to 4 players':'1–2 players')+' · 60-second rounds · No downloads to install';$('player-picker').hidden=id==='remix';$('player-setting').hidden=id==='remix';$('auto-players').hidden=id!=='remix';$('hazard-setting').hidden=id!=='fruit';document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode('easy');}if(id==='bubbles'||id==='remix')setMode('easy');document.querySelector('.mode-picker').hidden=id!=='fruit';$('level-note').hidden=id!=='fruit';$('demo').textContent='Play with mouse or touch';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
 function mainMenu(){home();document.querySelector('.sky-label').textContent='PLAY GARDEN';$('welcome').hidden=true;$('suite-menu').hidden=false;}
 document.querySelectorAll('[data-game]').forEach(button=>button.onclick=()=>chooseGame(button.dataset.game));$('all-games').onclick=mainMenu;$('choose-game').onclick=mainMenu;
 function setPlayers(n){config.players=Number(n);$('players').value=String(n);document.querySelectorAll('[data-players]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.players)===config.players)));}
@@ -78,7 +78,7 @@ function screenPoint(p){const r=imageRect();return {x:(r.x+(1-p.x)*r.w)/W,y:(r.y
 function stopMedia(){music?.update(false);epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
 function home(){shakePending=false;music?.update(false);$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
 function fail(message){lastError=message;home();status(message,true);updateDiagnostics();}
-function baseSession(type){if(selectedGame==='remix')setMode('easy');jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){setMode('easy');config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config};targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
+function baseSession(type){if(selectedGame==='remix')setMode('easy');jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){setMode('easy');config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config,players:selectedGame==='remix'?4:config.players};remixRoster=new RemixRoster();targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent='1:00';$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=selectedGame==='remix'?'Auto join · up to 4 · No obstacles':selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
 function ready(){phase='ready';readyClock=0;$('ready-bar').hidden=false;$('pause').hidden=true;status('');if(source==='demo'){$('ready-title').textContent='Your pointer is a magic hand';$('ready-description').textContent=GAMES[selectedGame].description+' The round starts automatically in 3 seconds.';}else{$('ready-title').textContent='Find your hands';$('ready-description').textContent=(sessionConfig.players===1?'Solo play: keep your head and hands in view.':'Play together: stand side by side. One shared score.');}$('start-round').disabled=source!=='demo';spawnClock=0;}
 function launchWorker(token){
   worker=new Worker(new URL('./vision-worker.js',import.meta.url));
@@ -131,18 +131,21 @@ $('vision-check').onclick=async()=>{
 };
 function updatePlayers(poses,now){
   const fresh=poses.filter(p=>p[11]&&p[12]&&(p[11].visibility??1)>.3&&(p[12].visibility??1)>.3);
+  if(selectedGame==='remix'){players=remixRoster.update(fresh,now);}else{
   const previous=players.filter(p=>now-p.seen<350);
   const matched=matchPoses(previous,fresh);
   players=matched.map(({pose,old,x,y})=>{
     const smooth=old?pose.map((p,i)=>({...p,x:old.pose[i].x*.25+p.x*.75,y:old.pose[i].y*.25+p.y*.75})):pose;
     return {id:old?.id??nextPlayerId++,cx:x,cy:y,pose:smooth,seen:now,stable:old?old.stable+1:1};
   });
+  }
   const prevHands=hands;hands=[];
   for(const player of players)for(const joint of [15,16]){
     const p=player.pose[joint];if((p.visibility??1)<.45||player.stable<2)continue;
     const point=screenPoint(p),id=`${player.id}:${joint}`,old=prevHands.find(h=>h.id===id);
-    hands.push({...point,id,playerId:player.id,bodyWidth:Math.hypot((screenPoint(player.pose[11]).x-screenPoint(player.pose[12]).x),(screenPoint(player.pose[11]).y-screenPoint(player.pose[12]).y)*H/W),r:mode==='gentle'?.026:.019,confidence:p.visibility??1,seen:now,prev:old?{x:old.x,y:old.y,time:old.seen}:null});
+    hands.push({...point,id,playerId:player.id,trailSlot:player.slot,bodyWidth:Math.hypot((screenPoint(player.pose[11]).x-screenPoint(player.pose[12]).x),(screenPoint(player.pose[11]).y-screenPoint(player.pose[12]).y)*H/W),r:mode==='gentle'?.026:.019,confidence:p.visibility??1,seen:now,prev:old?{x:old.x,y:old.y,time:old.seen}:null});
   }
+  if(selectedGame==='remix')$('session-rules').textContent=`${players.length} / 4 joined · Step in to join · Shared score`;
   if(phase==='ready'){$('start-round').disabled=hands.length===0;$('ready-title').textContent=players.length?`${players.length} player${players.length>1?'s':''} in view`:'Looking for players…';}
 }
 async function requestFrame(now){
@@ -284,7 +287,7 @@ function step(dt,now){
     if(active)for(const h of hands){
       const path=swipeTrails.get(h.id)||[],last=path.at(-1);
       if(last&&Math.hypot(h.x-last.x,h.y-last.y)>.25&&!h.direct){swipeTrails.delete(h.id);continue;}
-      if(!last||Math.hypot(h.x-last.x,h.y-last.y)>.001){if(!last&&h.prev&&now-h.prev.time<250)path.push({...h.prev});path.push({x:h.x,y:h.y,time:now});swipeTrails.set(h.id,path.slice(-30));}
+      if(!last||Math.hypot(h.x-last.x,h.y-last.y)>.001){if(!last&&h.prev&&now-h.prev.time<250)path.push({...h.prev});path.push({x:h.x,y:h.y,time:now,trailSlot:h.trailSlot??(h.id==='mouse'?0:Number(String(h.id).split(':')[1])%4)});swipeTrails.set(h.id,path.slice(-30));}
     }
   }
   trailClock+=dt;
@@ -333,12 +336,13 @@ function drawBasket(h,front){
  ctx.restore();
 }
 function butterfly(x,y,t,index){if(artReady('atlas')){const flap=reduceMotion?1:.82+.18*Math.sin(t*9+index);ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(t*2+index)*.1);sprite('butterfly',0,0,65*flap,58);ctx.restore();return;}if(artReady('butterfly')){const flap=reduceMotion?1:.8+.2*Math.sin(t*9+index);ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(t*2+index)*.12);ctx.drawImage(art.butterfly,-32*flap,-22,64*flap,44);ctx.restore();return;}ctx.save();ctx.translate(x,y);const flap=reduceMotion?1:.7+.3*Math.sin(t*9+index);ctx.shadowColor='#d394ff';ctx.shadowBlur=12;for(const side of [-1,1]){ellipse(side*11*flap,-7,12*flap,14,index%2?'#6ddbc9':'#c2a0fa');ellipse(side*9*flap,9,9*flap,10,index%2?'#b6f5e2':'#ffb7d9');ellipse(side*13*flap,-9,4*flap,5,'#ffffffbb');}ctx.shadowBlur=0;ellipse(0,1,3,13,'#64517f');ctx.strokeStyle='#64517f';ctx.lineWidth=1.5;for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(0,-9);ctx.quadraticCurveTo(side*3,-20,side*7,-18);ctx.stroke();}ctx.restore();}
-function handProp(h,t,index){const x=h.x*W,y=h.y*H;if(selectedGame==='bubbles'){butterfly(x,y,t,index);return;}if(isFruit()){ctx.save();ctx.shadowColor='#6af9ff';ctx.shadowBlur=reduceMotion?0:18;ellipse(x,y,6,6,'#fffbea');ctx.restore();}}
+function handProp(h,t,index){const x=h.x*W,y=h.y*H;if(selectedGame==='bubbles'){butterfly(x,y,t,index);return;}if(isFruit()){ctx.save();ctx.shadowColor=selectedGame==='remix'?REMIX_TRAILS[h.trailSlot??0].color:'#6af9ff';ctx.shadowBlur=reduceMotion?0:18;ellipse(x,y,6,6,'#fffbea');ctx.restore();}}
 function drawSwipeTrails(now){
  for(const path of swipeTrails.values())for(let i=1;i<path.length;i++){
   const a=path[i-1],b=path[i],fade=Math.max(0,1-(now-b.time)/(reduceMotion?130:500));
-  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=fade;ctx.shadowColor='#b765ff';ctx.shadowBlur=reduceMotion?0:16;
-  ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H);ctx.strokeStyle='#b678ff';ctx.lineWidth=3+fade*10;ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fffbea';ctx.lineWidth=1+fade*3;ctx.stroke();ctx.restore();
+  const style=selectedGame==='remix'?REMIX_TRAILS[b.trailSlot??0]:null;
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.globalAlpha=fade;ctx.shadowColor=style?.color||'#b765ff';ctx.shadowBlur=reduceMotion?0:16;
+  ctx.beginPath();ctx.moveTo(a.x*W,a.y*H);ctx.lineTo(b.x*W,b.y*H);ctx.strokeStyle=style?.color||'#b678ff';ctx.lineWidth=3+fade*10;ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#fffbea';ctx.lineWidth=1+fade*3;ctx.stroke();if(style&&i%3===0){const x=b.x*W,y=b.y*H,r=3+fade*2;ctx.fillStyle=style.color;ctx.strokeStyle=style.color;ctx.lineWidth=2;if(style.shape==='star')star(x,y,r,style.color);else if(style.shape==='circle')ellipse(x,y,r,r,style.color);else{ctx.beginPath();if(style.shape==='diamond'){ctx.moveTo(x,y-r);ctx.lineTo(x+r,y);ctx.lineTo(x,y+r);ctx.lineTo(x-r,y);ctx.closePath();}else{ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);}ctx.stroke();}}ctx.restore();
  }
 }
 

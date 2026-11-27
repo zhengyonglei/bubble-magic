@@ -73,3 +73,5 @@ Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and
 - v0.12.3: reduced tree height to 110% while retaining 160% width and grounded roots. The cropped canopy now stays visible behind the full-width 11–16% spawn band, instead of exposing the trunk there.
 
 - v0.13.0: Fruit Slice Remix is a separate Preview card. Original fruit rules retained. Dedicated fruit-remix.js owns wave pacing, per-hand directional swipe combos, juicy cut surfaces and slice audio. No Remix obstacles; 3/4/5-fruit waves then 7-fruit finale at 50 seconds. Tests cover full rounds, touch combos, resets and no hazards.
+
+- v0.13.1: Remix-only automatic four-person roster (900ms join, 1500ms style reservation), unique per-player cyan/coral/gold/violet trails with circle/diamond/star/cross accents. Other games retain existing player controls. Positional tracking cannot guarantee identity through overlapping people.

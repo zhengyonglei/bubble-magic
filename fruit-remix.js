@@ -38,3 +38,22 @@ export function remixSliceSound(audio,combo=false){
  const src=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();src.buffer=buffer;filter.type='bandpass';filter.frequency.setValueAtTime(2200,t);filter.frequency.exponentialRampToValueAtTime(500,t+.13);gain.gain.setValueAtTime(.12,t);gain.gain.exponentialRampToValueAtTime(.001,t+.14);src.connect(filter).connect(gain).connect(audio.destination);src.start(t);src.stop(t+.15);
  if(combo)for(let i=0;i<3;i++){const o=audio.createOscillator(),g=audio.createGain();o.type='triangle';o.frequency.value=[660,880,1100][i];g.gain.setValueAtTime(.035,t+i*.045);g.gain.exponentialRampToValueAtTime(.001,t+.3+i*.045);o.connect(g).connect(audio.destination);o.start(t+i*.045);o.stop(t+.35+i*.045);}
 }
+export const REMIX_TRAILS=[
+ {color:'#37deef',shape:'circle',name:'Cyan'},
+ {color:'#ff807d',shape:'diamond',name:'Coral'},
+ {color:'#ffce57',shape:'star',name:'Gold'},
+ {color:'#bb85ff',shape:'cross',name:'Violet'}
+];
+// Session-local positional roster. Reserve a style during brief detection gaps.
+export class RemixRoster {
+ constructor(){this.tracks=[];this.nextId=1;}
+ update(poses,now){
+  this.tracks=this.tracks.filter(p=>now-p.seen<=1500);
+  const detections=poses.filter(p=>[11,12,23,24].every(i=>p[i]&&(p[i].visibility??1)>.45)).map(pose=>({pose,cx:(pose[11].x+pose[12].x)/2,cy:(pose[11].y+pose[12].y)/2}));
+  const pairs=[];for(const t of this.tracks)for(const [i,p] of detections.entries()){const d=Math.hypot(t.cx-p.cx,t.cy-p.cy);if(d<.20)pairs.push({t,i,d});}pairs.sort((a,b)=>a.d-b.d);
+  const used=new Set(),matched=new Set();
+  for(const {t,i} of pairs){if(used.has(i)||matched.has(t.id))continue;used.add(i);matched.add(t.id);const p=detections[i];if(now-t.seen>250&&!t.joined)t.since=now;Object.assign(t,p,{seen:now,stable:t.stable+1});if(now-t.since>=900)t.joined=true;}
+  for(const [i,p] of detections.entries()){if(used.has(i)||this.tracks.length>=4)continue;const slot=[0,1,2,3].find(s=>!this.tracks.some(t=>t.slot===s));this.tracks.push({...p,id:'remix-'+this.nextId++,slot,since:now,seen:now,stable:1,joined:false});}
+  return this.tracks.filter(t=>t.joined&&t.seen===now);
+ }
+}
