@@ -20,8 +20,8 @@ export class Runner {
 }
 
 export function body(p){
-  const ids=[11,12,23,24,25,26,27,28];
-  if(!p||ids.some(i=>!p[i]||(p[i].visibility??0)<.6))return null;
+  const ids=[11,12,23,24];
+  if(!p||ids.some(i=>!p[i]||(p[i].visibility??0)<.45))return null;
   const x=(p[11].x+p[12].x+p[23].x+p[24].x)/4;
   const y=(p[11].y+p[12].y+p[23].y+p[24].y)/4;
   const size=Math.hypot(p[11].x-p[23].x,p[11].y-p[23].y);
@@ -31,26 +31,31 @@ export function body(p){
 
 export class PlayerLock {
   constructor(){this.reset();}
-  reset(){this.target=null;this.candidate=null;this.since=0;this.last=0;this.blocked=false;this.reason='Stand in the outline and raise both hands.';}
+  reset(){this.target=null;this.candidate=null;this.since=0;this.last=0;this.blocked=false;this.waiting=false;this.reason='Stand in the outline and raise both hands.';}
+  wait(reason){this.waiting=true;this.reason=reason;return null;}
   update(poses,now){
     const people=poses.map(body).filter(Boolean);
     if(this.blocked)return null;
     if(!this.target){
-      // Admission requires exactly one detected, fully visible person for 1.2 seconds.
+      // Select one visible torso with raised hands; ankles are not needed for identity.
       const p=people.length===1&&poses.length===1&&people[0];
       if(!p||!p.raised||Math.abs(p.x-.5)>.18){this.candidate=null;this.since=now;return null;}
       if(!this.candidate||Math.abs(p.x-this.candidate.x)>.08||Math.abs(p.size/this.candidate.size-1)>.2){this.candidate=p;this.since=now;return null;}
       if(now-this.since<1200)return null;
-      this.target=p;this.last=now;this.reason='Player selected. March to explore!';return p;
+      this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
     }
     const prev=this.target;
-    const matches=people.filter(p=>Math.abs(p.x-prev.x)<.09&&Math.abs(p.y-prev.y)<.12&&Math.abs(p.size/prev.size-1)<.25);
+    // Allow the torso travel of a jump or lean, including slower inference intervals.
+    const matches=people.filter(p=>Math.abs(p.x-prev.x)<.14&&Math.abs(p.y-prev.y)<.22&&Math.abs(p.size/prev.size-1)<.45);
     const p=matches[0];
-    // Invalid partial detections and nearby bystanders are also uncertainty, not permission to switch.
-    if(now-this.last>450||people.length!==poses.length||matches.length!==1||people.some(q=>q!==p&&Math.abs(q.x-p.x)<.32)){
-      this.blocked=true;this.reason='Tracking uncertain. Clear the space, then select the player again.';return null;
+    // A nearby partial person can still obscure the selected player. A distant
+    // partial detection must not invalidate an otherwise clear match.
+    const nearby=poses.length>1&&poses.some(raw=>{if(raw===p?.p)return false;const points=[11,12,23,24].map(i=>raw?.[i]).filter(q=>q&&(q.visibility??0)>.25);if(!points.length)return false;const x=points.reduce((v,q)=>v+q.x,0)/points.length;return Math.abs(x-(p?.x??prev.x))<.32;});
+    if(now-this.last>1200||matches.length>1||nearby||people.length&&matches.length===0){
+      this.blocked=true;return this.wait(now-this.last>1200?'Player lost for too long. Select player again.':'People overlap or player changed. Clear the space and select player again.');
     }
-    this.target=p;this.last=now;return p;
+    if(!p)return this.wait('Brief tracking gap — hold your position. Resuming automatically…');
+    this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
   }
 }
 
@@ -63,10 +68,11 @@ export class Movement {
     const duck=(b.y-this.base.y)/scale>.23;
     const jump=rise>.2&&!this.air;
     if(rise>.2)this.air=true;else if(rise<.09)this.air=false;
-    const diff=(p[25].y-p[26].y)/scale;
+    const knees=[25,26].every(i=>p[i]&&(p[i].visibility??0)>.45);
+    const diff=knees?(p[25].y-p[26].y)/scale:0;
     const side=diff>.1?1:diff<-.1?-1:0;
     if(side&&side!==this.lastSide){this.lastStep=now;this.lastSide=side;}
     const lean=(b.x-this.base.x)/scale;
-    return {moving:now-this.lastStep<650,duck,jump,lane:lean>.3?-1:lean<-.3?1:0};
+    return {moving:knees&&now-this.lastStep<650,duck,jump,lane:lean>.3?-1:lean<-.3?1:0};
   }
 }

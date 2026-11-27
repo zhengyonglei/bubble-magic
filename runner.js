@@ -33,11 +33,11 @@ $('camera').onclick=async()=>{
       if(data.type==='error'){busy=false;ready=false;motion={};$('tracking').textContent=data.message;}
       if(data.type==='result'){
         data.frame?.close();busy=false;
-        if(paused||document.hidden)return;
+        if(token!==session||paused||document.hidden)return;
         const now=performance.now();
         // Discard late inference instead of letting an old pose control a new frame.
-        if(now-data.stamp>450){motion={};lock.blocked=true;lock.reason='Tracking too slow. Select again or use controls.';}
-        else{const b=lock.update(data.landmarks,now);motion=b?movement.update(b,now):{};if(b){lastPose=now;game.lane=motion.lane;if(motion.jump)game.hop();}}
+        if(now-data.stamp>700){motion={};lock.wait('Camera processing is slow — trail paused until a fresh frame arrives.');}
+        else{const b=lock.update(data.landmarks,now);motion=b?movement.update(b,now):{};if(b){lastPose=now;if(![25,26].every(i=>(b.p[i]?.visibility??0)>.45))lock.reason='Player selected. Step back so the camera can see both knees.';game.lane=motion.lane;if(motion.jump)game.hop();}}
         $('tracking').textContent=lock.reason;
       }
     };
@@ -115,10 +115,10 @@ function draw(){
 }
 function frame(now){const dt=(now-last)/1000;last=now;
  if(mode==='camera'&&active)infer(now);
- const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||now-lastPose>450);
+ const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
  if(active){game.step(dt,{moving:mode==='camera'?!!motion.moving:heldAction('move'),duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
- const message=paused?'Adventure paused. Take your time.':trackingPause?'Trail paused — waiting for your selected player.':game.message;if($('message').textContent!==message)$('message').textContent=message;
+ const message=paused?'Adventure paused. Take your time.':trackingPause?lock.reason:game.message;if($('message').textContent!==message)$('message').textContent=message;
  if(game.finished){active=false;clearInput();stopCamera();$('finish').hidden=false;$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}
  draw();requestAnimationFrame(frame);
 }
