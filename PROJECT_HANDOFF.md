@@ -69,3 +69,5 @@ Build runner-07: Hopping Logs/River Hops each have 3 full-width logs at 12 m spa
 Suite 0.12.1: tree art is 93% of stage height, grounded at 94%. Branch growth and release centers are at 11–16% of stage height, with sprite bounds in the top quarter. Root-relative coordinates keep branch/release positions aligned. Runner build 07 unchanged.
 
 Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and 160% width, rooted at 94%, with canopy cropped beyond top/sides. Spawns span 6–94% of stage width, remaining at 11–16% height.
+
+- v0.12.3: reduced tree height to 110% while retaining 160% width and grounded roots. The cropped canopy now stays visible behind the full-width 11–16% spawn band, instead of exposing the trunk there.
