@@ -24,3 +24,7 @@ test('brief visitors do not join and fifth detection cannot claim an occupied st
  const r=new RemixRoster();r.update([poseAt(.1)],0);r.update([],100);assert.equal(r.update([poseAt(.1)],1000).length,0);
  const full=new RemixRoster();const p=[.1,.3,.5,.7,.9].map(poseAt);full.update(p,0);for(let t=100;t<=1000;t+=100)full.update(p,t);assert.equal(full.tracks.length,4);assert.equal(full.update([],1100).length,0);
 });
+test('Remix scales next wave with joined player count and scales back after departure',()=>{
+ const r=new FruitRemix();for(const [people,count] of [[1,3],[2,5],[3,7],[4,9],[2,5],[1,3]]){const wave=r.update(4,0,.56,.42,()=>.5,people);assert.equal(wave.length,count);if(people>1){assert.ok(wave.some(t=>t.x<0));assert.ok(wave.some(t=>t.x>1));}}
+ assert.equal(r.update(4,51,.56,.42,()=>.5,4).length,13);assert.equal(r.update(4,51,.56,.42,()=>.5,99).length,13);
+});

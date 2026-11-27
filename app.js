@@ -1,14 +1,14 @@
-import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.13.1';
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.13.1';
+import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.13.2';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.13.2';
 import {GardenMusic} from './music.js?v=0.12.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.13.1';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.13.2';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.13.1';
+const BUILD='0.13.2';
 const isFruit=()=>selectedGame==='fruit'||selectedGame==='remix';
 let remix=new FruitRemix(),remixRoster=new RemixRoster();
 const art={};for(const [name,file] of Object.entries({treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
@@ -246,7 +246,7 @@ function step(dt,now){
   if(phase==='playing'&&active){
     hazardClock+=dt;
     spawnClock+=dt;const practice=phase==='ready',interval=practice?1.3:level().interval;
-    if(selectedGame==='remix'){for(const target of remix.update(dt,round.time,H/W,playerZone(spawnCount).y)){if(targets.length<24)targets.push({...target,id:++targetId});}}
+    if(selectedGame==='remix'){for(const target of remix.update(dt,round.time,H/W,playerZone(spawnCount).y,Math.random,source==='demo'?1:remixRoster.tracks.filter(p=>p.joined&&now-p.seen<=1500).length)){if(targets.length<32)targets.push({...target,id:++targetId});}}
     if(selectedGame!=='remix'&&selectedGame!=='pets'&&spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
     if(selectedGame==='pets'){
       shakeCooldown=Math.max(0,shakeCooldown-dt);treeWobble=Math.max(0,treeWobble-dt);

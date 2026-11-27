@@ -1,15 +1,17 @@
 import {fruitLaunch,fruitSize} from './game-modes.js?v=0.13.0';
 export class FruitRemix {
  constructor(){this.clock=0;this.nextWave=.4;this.wave=0;this.swipes=new Map();this.banner='Ready, set, slice!';this.bannerUntil=2;}
- update(dt,elapsed,aspect,aimY=.42,random=Math.random){
+ update(dt,elapsed,aspect,aimY=.42,random=Math.random,playerCount=1){
   this.clock+=dt;if(this.clock<this.nextWave)return [];
-  const finale=elapsed>=50,count=finale?7:elapsed<15?3:elapsed<35?4:5;
+  const people=Math.max(1,Math.min(4,Math.floor(playerCount)||1));
+  const finale=elapsed>=50,base=finale?7:elapsed<15?3:elapsed<35?4:5,count=base+2*(people-1);
   this.nextWave=this.clock+(finale?2.3:3.6);this.wave++;
   this.banner=finale?'FRUIT SHOWER!':elapsed<15?'Sweep through a whole wave!':elapsed<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
   return Array.from({length:count},(_,i)=>{
-   const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=this.wave%2;
-   const launch=fruitLaunch('easy',left,r,Math.max(.26,Math.min(.55,aimY+(i-(count-1)/2)*.035)),random,aspect);
-   return {...launch,x:launch.x+(left?-1:1)*i*.045,y:launch.y+i*.012,gravity:.36,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true};
+   const group=people>1?Math.floor(i/Math.ceil(count/2)):0,local=people>1?i%Math.ceil(count/2):i;
+   const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=(this.wave+group)%2;
+   const launch=fruitLaunch('easy',left,r,Math.max(.26,Math.min(.55,aimY+(local-((people>1?Math.ceil(count/2):count)-1)/2)*.035)),random,aspect);
+   return {...launch,x:launch.x+(left?-1:1)*local*.012,y:launch.y+local*.012,gravity:.36,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true};
   });
  }
  hit(handId,target,now){

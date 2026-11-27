@@ -75,3 +75,5 @@ Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and
 - v0.13.0: Fruit Slice Remix is a separate Preview card. Original fruit rules retained. Dedicated fruit-remix.js owns wave pacing, per-hand directional swipe combos, juicy cut surfaces and slice audio. No Remix obstacles; 3/4/5-fruit waves then 7-fruit finale at 50 seconds. Tests cover full rounds, touch combos, resets and no hazards.
 
 - v0.13.1: Remix-only automatic four-person roster (900ms join, 1500ms style reservation), unique per-player cyan/coral/gold/violet trails with circle/diamond/star/cross accents. Other games retain existing player controls. Positional tracking cannot guarantee identity through overlapping people.
+
+- v0.13.2: Remix wave sizes scale with joined players: +2 fruit per extra person (opening 3/5/7/9; finale 7/9/11/13). Multiplayer waves enter from both sides, reserve population for 1.5-second tracking gaps, cap targets at 32. Solo and other games retain pacing.
