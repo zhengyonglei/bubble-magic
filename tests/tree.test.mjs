@@ -46,4 +46,4 @@ test('treasures appear gradually and only repeated jumps release mature items',(
  for(let i=0;i<50;i++){s=advanceTree(s.items,s.index,'easy',0);assert.equal(s.falling.length,0);assert.ok(s.items.length<=18);}
 });
 
-test('all tree treasures grow and release in the top quarter above normal nets',()=>{for(const random of [()=>0,()=>.5,()=>.999999]){let s={items:[],index:0};for(let jump=0;jump<5;jump++){s=advanceTree(s.items,s.index,'easy',14,random);for(const item of [...s.items,...s.falling]){assert.ok(item.x>=.34&&item.x<=.66);assert.ok(item.y>=.11&&item.y<=.16);assert.ok(item.y+item.r*1.35<.25);assert.equal(netContact(item,{a:hand(.1,.5),b:hand(.9,.5)},1000,600,100),false);}}}});
+test('all tree treasures grow and release in the top quarter above normal nets',()=>{for(const random of [()=>0,()=>.5,()=>.999999]){let s={items:[],index:0};for(let jump=0;jump<5;jump++){s=advanceTree(s.items,s.index,'easy',14,random);for(const item of [...s.items,...s.falling]){assert.ok(item.x>=.06&&item.x<=.94);assert.ok(item.y>=.11&&item.y<=.16);assert.ok(item.y+item.r*1.35<.25);assert.equal(netContact(item,{a:hand(.1,.5),b:hand(.9,.5)},1000,600,100),false);}}}});

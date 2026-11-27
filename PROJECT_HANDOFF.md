@@ -67,3 +67,5 @@ Build runner-06: star bursts, flying star to HUD, +1 text, warm collision border
 Build runner-07: Hopping Logs/River Hops each have 3 full-width logs at 12 m spacing. Leaf/Vine Tunnels require continuous ducking across 24 m; one collision or clear event per tunnel, with no repeat penalties. Section cues warn 18 m early and prompt jump 2.7 m before each log. Conflicting legacy hazards removed around sections. At 350 m a stone-and-gold temple doorway with banners/open doors marks the destination, preserving finish fireworks. Browser inspected section warnings, tunnels and destination; 87 tests pass.
 
 Suite 0.12.1: tree art is 93% of stage height, grounded at 94%. Branch growth and release centers are at 11–16% of stage height, with sprite bounds in the top quarter. Root-relative coordinates keep branch/release positions aligned. Runner build 07 unchanged.
+
+Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and 160% width, rooted at 94%, with canopy cropped beyond top/sides. Spawns span 6–94% of stage width, remaining at 11–16% height.

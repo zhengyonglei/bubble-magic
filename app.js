@@ -1,4 +1,4 @@
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.12.1';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.12.2';
 import {GardenMusic} from './music.js?v=0.12.0';
 import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.12.0';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
@@ -389,8 +389,8 @@ function drawTree(t){
  const wobble=treeWobble>0?Math.sin(t*24)*treeWobble*.055:0;
  ellipse(W*.5,H*.935,W*.16,H*.018,'#526c4930');
  ctx.save();ctx.translate(W*.5,H*.94);ctx.rotate(wobble);
- if(artReady('tree'))ctx.drawImage(art.tree,-W*.33,-H*.93,W*.66,H*.93);
- else{ctx.strokeStyle='#b18a62';ctx.lineWidth=Math.max(15,W*.028);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-H*.72);ctx.stroke();for(let i=0;i<5;i++)ellipse((i-2)*W*.095,-H*(.72+(i%2)*.06),W*.13,H*.15,['#a4dbad','#bce6b4','#85cfa7'][i%3]);}
+ if(artReady('tree'))ctx.drawImage(art.tree,-W*.80,-H*1.65,W*1.60,H*1.65);
+ else{ctx.strokeStyle='#b18a62';ctx.lineWidth=Math.max(15,W*.028);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-H*.94);ctx.stroke();for(let i=0;i<5;i++)ellipse((i-2)*W*.23,-H*(.91+(i%2)*.09),W*.32,H*.34,['#a4dbad','#bce6b4','#85cfa7'][i%3]);}
  for(const item of treeItems){const size=item.r*H*(.35+item.shown*.65);ctx.save();ctx.globalAlpha=.25+item.shown*.75;const x=(item.x-.5)*W,y=item.y*H-H*.94;treasureArt(x,y,size,item);ctx.restore();}
  ctx.restore();ctx.save();ctx.font='700 '+Math.max(12,Math.min(21,W*.019))+'px sans-serif';ctx.textAlign='center';ctx.fillStyle='#345c47';ctx.fillText(source==='demo'?'Tap Jump! to grow, then drop':'JUMP to grow, then drop!',W*.5,H*.70);ctx.fillText('EVERYONE: spread hands to catch',W*.5,H*.75);ctx.restore();
 }
