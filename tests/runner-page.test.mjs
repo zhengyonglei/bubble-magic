@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
-import {Runner,PlayerLock,Movement} from '../runner-core.js';
+import {Runner,PlayerLock,Movement,courseCue} from '../runner-core.js';
 import {RunnerEffects} from '../runner-effects.js';
 import {appearance,drawTracking} from '../runner-tracking.js';
 function page(width=1280,height=720){
@@ -14,7 +14,7 @@ function page(width=1280,height=720){
  const element=id=>els[id]??=( {hidden:false,textContent:'',play:async()=>{},focus(){},getBoundingClientRect:()=>({width,height}),getContext:()=>context2d});
  const document={getElementById:element,createElement:()=>element('capture'),querySelectorAll:()=>buttons,addEventListener:(n,f)=>events[n]=f};
  const window={addEventListener:(n,f)=>events[n]=f};
- const c=vm.createContext({RunnerEffects,Runner,PlayerLock,Movement,Worker:FakeWorker,navigator,appearance,drawTracking,document,window,performance:{now:()=>clock.now},requestAnimationFrame(){},console});
+ const c=vm.createContext({courseCue,RunnerEffects,Runner,PlayerLock,Movement,Worker:FakeWorker,navigator,appearance,drawTracking,document,window,performance:{now:()=>clock.now},requestAnimationFrame(){},console});
  vm.runInContext(readFileSync(new URL('../runner.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),c);
  return {c,els,events,buttons,clock,workers,cameraCalls,run:s=>vm.runInContext(s,c),key:(code)=>events.keydown({code,target:{tagName:'CANVAS'},preventDefault(){}})};
 }

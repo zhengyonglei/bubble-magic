@@ -1,6 +1,6 @@
-import {RunnerEffects} from './runner-effects.js?v=runner-06';
-import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-06';
-import {appearance,drawTracking} from './runner-tracking.js?v=runner-06';
+import {RunnerEffects} from './runner-effects.js?v=runner-07';
+import {Runner,PlayerLock,Movement,courseCue} from './runner-core.js?v=runner-07';
+import {appearance,drawTracking} from './runner-tracking.js?v=runner-07';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
@@ -30,7 +30,7 @@ async function startCamera(){
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-06');
+    worker=new Worker('./vision-worker.js?v=runner-07');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(token!==session){data.frame?.close();return;}
@@ -86,6 +86,17 @@ function star(x,y,z){
  face([[x-.5,y,z],[x-.45,y+.05,z],[x-.5,y+.15,z],[x-.55,y+.05,z]],'#fff8d4');
 }
 function ruin(z){for(const x of [-3.5,3.5]){box(x,0,z,1,3.6,1,stone);box(x,0,z,1.4,.35,1.4,stone);box(x,3.4,z,1.4,.4,1.4,stone);box(x,3.8,z,1.1,.15,1.1,leaf);}box(0,3.8,z,8,.6,1.2,stone);box(0,4.4,z,6,.2,1.3,leaf);for(const x of [-2,0,2])box(x,3.95,z-.62,.26,.25,.035,['#e0c875']);}
+function destination(z){
+ const gold=['#c99b3b','#98702e','#ffe39a'];
+ box(0,0,z+2,9,.18,7,stone);
+ // A deep teal doorway, open golden doors, and stepped temple roof.
+ face([[-2.6,.18,z+4],[2.6,.18,z+4],[2.6,4.5,z+4],[-2.6,4.5,z+4]],'#143f4b');
+ box(0,.18,z+3.9,4.6,.12,.4,['#b4ead6']);
+ for(const side of [-1,1]){box(side*3,0,z,1.15,4.5,1.2,stone);box(side*3,.1,z,1.55,.3,1.5,gold);box(side*3,4.3,z,1.5,.4,1.5,gold);box(side*2.7,.2,z+1,.18,3.7,2,gold);box(side*4.2,0,z,.14,5,.14,gold);face([[side*4.2,4.8,z],[side*5.4,4.8,z],[side*5.4,3.6,z],[side*4.2,3.9,z]],side<0?'#e79bab':'#8adbc7');star(side*3,4.9,z);}
+ box(0,4.5,z,7.5,.55,1.8,stone);box(0,5.05,z+.2,6,.4,2.1,gold);box(0,5.45,z+.4,4.4,.35,2.2,leaf);star(0,5.95,z+.2);
+ for(let i=0;i<7;i++)box(-2.4+i*.8,.19,z-1,.75,.025,.45,[i%2?'#fff1af':'#c89b44']);
+}
+function tunnel(start,end){for(let z=start;z<=end;z+=3){if(z<-.8||z>85)continue;for(const x of [-2.45,2.45]){box(x,0,z,.25,1.8,.32,bark);box(x,.04,z,.4,.16,.5,stone);}box(0,1.4,z,5.15,.28,.65,bark);box(0,1.68,z,5.4,.35,2.85,leaf);for(const x of [-1.8,-.9,0,.9,1.8])box(x,1.4,z-.35,.2,.2,.04,['#f5cf75']);}}
 function explorer(x,y,duck,walk){
  const shadow=.5-y*.08;face([[x-shadow,.025,-.35],[x+shadow,.025,-.35],[x+shadow,.025,.4],[x-shadow,.025,.4]],'#49664d');
  for(const side of [-1,1]){const stride=walk*side;
@@ -111,10 +122,12 @@ function draw(){
  for(let i=0;i<30;i++){const n=first+i,z=n*3-travel;
  face([[-2.55,.025,z],[2.55,.025,z],[2.55,.025,z+3],[-2.55,.025,z+3]],'#9e956d');
  for(let lane=-1;lane<=1;lane++){const col=noise(n*7+lane)>.5?['#b5b092','#8f9279','#d1c9a7']:['#a6a58b','#858e77','#c4c1a0'];box(lane*1.5,.03,z+1.45,1.43,.045,2.86,col);if(n%4===0)box(lane*1.5+.38,.08,z+1.6,.18,.006,.65,['#929b79']);for(let q=0;q<3;q++){const px=lane*1.5-.55+noise(n*11+q)*1.1,pz=z+.2+noise(n*17+q)*2.5;face([[px,.081,pz],[px+.13,.081,pz],[px+.13,.081,pz+.16],[px,.081,pz+.16]],q%2?'#bbb899':'#dad0ae');}}
- for(const side of [-1,1]){box(side*2.48,.02,z+1.5,.22,.17,2.95,['#5c874f','#406a43','#8caf65']);if(i<20&&z>-.5){tree(side*(3.4+noise(n+side)*2.8),z,n*3+side);tuft(side*(2.9+noise(n)*.5),z+.9,n);if(n%3===0)mushroom(side*3,z+1.8,n);}if(n%5===0)box(side*3.3,0,z,.7,.5,.8,stone);}}
- for(let k=0;k<3;k++){const z=(Math.floor(travel/45)+k)*45+30-travel;if(z>5&&z<85)ruin(z);}
- for(const item of game.items){const z=item.z-travel;if(item.done||z<-.7||z>85)continue;const x=item.lane*1.5;
+ for(const side of [-1,1]){box(side*2.48,.02,z+1.5,.22,.17,2.95,['#5c874f','#406a43','#8caf65']);if(i<20&&z>-.5&&n*3<342){tree(side*(3.4+noise(n+side)*2.8),z,n*3+side);tuft(side*(2.9+noise(n)*.5),z+.9,n);if(n%3===0)mushroom(side*3,z+1.8,n);}if(n%5===0)box(side*3.3,0,z,.7,.5,.8,stone);}}
+ for(let k=0;k<3;k++){const z=(Math.floor(travel/45)+k)*45+30-travel;if(z>5&&z<85&&z+travel<320)ruin(z);}
+ if(350-travel<95)destination(350-travel);
+ for(const item of game.items){if(item.end!==undefined){if(item.end>=travel)tunnel(item.z-travel,item.end-travel);continue;}const z=item.z-travel;if(item.done||z<-.7||z>85)continue;const x=item.lane*1.5;
  if(item.kind==='star')star(x,1+Math.sin(t*2+item.z)*.12,z);
+ if(item.kind==='log'&&item.fullWidth){box(0,0,z,4.9,.6,.65,bark);box(0,.6,z,4.6,.08,.5,leaf);for(const dx of [-2,-1,0,1,2]){box(dx,.08,z-.33,.05,.43,.015,['#513e30']);face([[dx-.16,.3,z-.34],[dx,.52,z-.34],[dx+.16,.3,z-.34]],'#ffe39a');}continue;}
  if(item.kind==='log'){box(x,0,z,1.22,.6,.65,bark);box(x,.6,z,.95,.09,.48,leaf);for(const dx of [-.4,0,.4])box(x+dx,.08,z-.33,.045,.43,.015,['#513e30']);box(x+.3,.62,z,.18,.18,.18,bark);}
  if(item.kind==='arch'){for(const dx of [-.6,.6]){box(x+dx,0,z,.19,2,.22,bark);box(x+dx,.05,z,.31,.16,.32,stone);}box(x,1.4,z,1.4,.34,.55,bark);box(x,1.74,z,1.65,.28,.8,leaf);for(const dx of [-.4,0,.4])box(x+dx,1.43,z-.29,.12,.24,.035,['#efca6c']);}}
  const walk=active&&!paused?Math.sin(travel*3)*.17:0;explorer(game.x+(effects.reduced?0:Math.sin(effects.hit*35)*effects.hit*.08),game.height(),game.duck,walk);
@@ -126,9 +139,10 @@ function frame(now){const dt=(now-last)/1000;last=now;
  const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
  if(active){game.step(dt,{moving:true,duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
  for(const event of game.events.splice(0))effects.emit(event);
+ $('section-cue').textContent=courseCue(game.distance);$('section-cue').hidden=!$('section-cue').textContent;
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
  const message=paused?'Adventure paused. Take your time.':trackingPause?lock.reason:game.message;if($('message').textContent!==message)$('message').textContent=message;
- if(game.finished){active=false;clearInput();stopCamera();$('finish').hidden=false;$('again').textContent=mode==='camera'?'Play again · select player':'Another adventure';$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}
+ if(game.finished){$('section-cue').hidden=true;active=false;clearInput();stopCamera();$('finish').hidden=false;$('again').textContent=mode==='camera'?'Play again · select player':'Another adventure';$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}
  effects.step(dt,document.hidden||paused||(active&&trackingPause));
  draw();const overlay=$('effects');if(overlay.width!==w||overlay.height!==h){overlay.width=w;overlay.height=h;}effects.draw(overlay.getContext('2d'),w,h);requestAnimationFrame(frame);
 }
