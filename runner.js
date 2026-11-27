@@ -1,5 +1,5 @@
-import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-04';
-import {appearance,drawTracking} from './runner-tracking.js?v=runner-04';
+import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-05';
+import {appearance,drawTracking} from './runner-tracking.js?v=runner-05';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
@@ -14,7 +14,7 @@ $('select').onclick=()=>{selectedIndex=-1;lock.reset();movement=new Movement();m
 $('pause').onclick=()=>{if(!active)return;paused=!paused;clearInput();$('pause').textContent=paused?'Resume':'Pause';if(!paused)canvas.focus();};
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('message').textContent='Fullscreen unavailable. You can use the browser fullscreen command.';}};
 function action(a){if(!active||paused||mode==='camera')return;if(a==='left')game.lane=Math.max(-1,game.lane-1);if(a==='right')game.lane=Math.min(1,game.lane+1);if(a==='jump')game.hop();}
-const keys={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump',ArrowUp:'move',KeyW:'move',ArrowDown:'duck',KeyS:'duck'};
+const keys={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump',ArrowDown:'duck',KeyS:'duck'};
 window.addEventListener('keydown',e=>{const a=keys[e.code];if(!a||!active||e.target.tagName==='BUTTON'||e.target.tagName==='A')return;e.preventDefault();if(!e.repeat)action(a);held.add(e.code);});
 window.addEventListener('keyup',e=>held.delete(e.code));
 document.querySelectorAll('[data-action]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.add(`pointer:${e.pointerId}:${b.dataset.action}`);action(b.dataset.action);};const end=e=>held.delete(`pointer:${e.pointerId}:${b.dataset.action}`);b.onpointerup=end;b.onpointercancel=end;b.onlostpointercapture=end;});
@@ -28,7 +28,7 @@ $('camera').onclick=async()=>{
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-04');
+    worker=new Worker('./vision-worker.js?v=runner-05');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(data.type==='ready'){ready=true;$('tracking').textContent=lock.reason;}
@@ -41,7 +41,7 @@ $('camera').onclick=async()=>{
         const now=performance.now();
         // Discard late inference instead of letting an old pose control a new frame.
         if(now-data.stamp>700){motion={};lock.wait('Camera processing is slow — trail paused until a fresh frame arrives.');}
-        else{const b=lock.update(data.landmarks,now,features);if(b)selectedIndex=b.index;else if(lock.target){const nearby=data.landmarks.findIndex(p=>p[11]&&p[23]&&Math.abs((p[11].x+p[23].x)/2-lock.target.x)<.15);selectedIndex=nearby;}motion=b?movement.update(b,now):{};if(b){lastPose=now;if(![25,26].every(i=>(b.p[i]?.visibility??0)>.45))lock.reason='Player selected. Step back so the camera can see both knees.';game.lane=motion.lane;if(motion.jump)game.hop();}}
+        else{const b=lock.update(data.landmarks,now,features);if(b)selectedIndex=b.index;else if(lock.target){const nearby=data.landmarks.findIndex(p=>p[11]&&p[23]&&Math.abs((p[11].x+p[23].x)/2-lock.target.x)<.15);selectedIndex=nearby;}motion=b?movement.update(b,now):{};if(b){lastPose=now;game.lane=motion.lane;if(motion.jump)game.hop();}}
         $('tracking').textContent=lock.reason;drawTracking($('tracking-overlay').getContext('2d'),detected,selectedIndex,lock.waiting,480,360);
       }
     };
@@ -113,14 +113,14 @@ function draw(){
  if(item.kind==='star')star(x,1+Math.sin(t*2+item.z)*.12,z);
  if(item.kind==='log'){box(x,0,z,1.22,.6,.65,bark);box(x,.6,z,.95,.09,.48,leaf);for(const dx of [-.4,0,.4])box(x+dx,.08,z-.33,.045,.43,.015,['#513e30']);box(x+.3,.62,z,.18,.18,.18,bark);}
  if(item.kind==='arch'){for(const dx of [-.6,.6]){box(x+dx,0,z,.19,2,.22,bark);box(x+dx,.05,z,.31,.16,.32,stone);}box(x,1.4,z,1.4,.34,.55,bark);box(x,1.74,z,1.65,.28,.8,leaf);for(const dx of [-.4,0,.4])box(x+dx,1.43,z-.29,.12,.24,.035,['#efca6c']);}}
- const walk=active&&!paused&&(heldAction('move')||motion.moving)?Math.sin(travel*3)*.17:0;explorer(game.x,game.height(),game.duck,walk);
+ const walk=active&&!paused?Math.sin(travel*3)*.17:0;explorer(game.x,game.height(),game.duck,walk);
  faces.sort((a,b)=>b.z-a.z);for(const f of faces){ctx.fillStyle=f.color;ctx.beginPath();f.vertices.forEach((v,i)=>{const p=project(v);i?ctx.lineTo(...p):ctx.moveTo(...p);});ctx.closePath();ctx.fill();const fog=Math.min(.76,Math.max(0,(f.z-15)/100));if(fog){ctx.globalAlpha=fog;ctx.fillStyle='#c6e7ce';ctx.fill();ctx.globalAlpha=1;}}
  ctx.fillStyle='#fff0b0';for(let i=0;i<16;i++){const px=noise(i+90)*w+Math.sin(t*.3+i)*20,py=h*(.3+noise(i+130)*.5)+Math.sin(t+i)*9;ctx.globalAlpha=.25+noise(i)*.35;ctx.fillRect(px,py,2,2);}ctx.globalAlpha=1;
 }
 function frame(now){const dt=(now-last)/1000;last=now;
  if(mode==='camera'&&active){infer(now);if(outlineStamp&&now-outlineStamp>900){drawTracking($('tracking-overlay').getContext('2d'),[],-1,true,480,360);outlineStamp=0;}}
  const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
- if(active){game.step(dt,{moving:mode==='camera'?!!motion.moving:heldAction('move'),duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
+ if(active){game.step(dt,{moving:true,duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
  const message=paused?'Adventure paused. Take your time.':trackingPause?lock.reason:game.message;if($('message').textContent!==message)$('message').textContent=message;
  if(game.finished){active=false;clearInput();stopCamera();$('finish').hidden=false;$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}

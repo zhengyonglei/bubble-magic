@@ -1,4 +1,4 @@
-import {appearanceScore} from './runner-tracking.js?v=runner-04';
+import {appearanceScore} from './runner-tracking.js?v=runner-05';
 // Pure simulation and conservative session tracking. Appearance cues remain in session memory only.
 export class Runner {
   constructor(){this.distance=0;this.lane=0;this.x=0;this.jump=0;this.duck=false;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':i%7===6?'arch':'star',done:false}));}
@@ -43,7 +43,7 @@ export class PlayerLock {
       if(!p||!p.raised||Math.abs(p.x-.5)>.18){this.candidate=null;this.since=now;return null;}
       if(!this.candidate||Math.abs(p.x-this.candidate.x)>.08||Math.abs(p.size/this.candidate.size-1)>.2){this.candidate=p;this.since=now;return null;}
       if(now-this.since<1200)return null;
-      this.target=p;this.profile=p.appearance||null;this.anchorSize=p.size;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
+      this.target=p;this.profile=p.appearance||null;this.anchorSize=p.size;this.last=now;this.waiting=false;this.reason='Player selected. Running automatically — jump, duck, or lean!';return p;
     }
     if(this.profile)return this.matchAppearance(people,poses,now);
     const prev=this.target;
@@ -57,7 +57,7 @@ export class PlayerLock {
       this.blocked=true;return this.wait(now-this.last>1200?'Player lost for too long. Select player again.':'People overlap or player changed. Clear the space and select player again.');
     }
     if(!p)return this.wait('Brief tracking gap — hold your position. Resuming automatically…');
-    this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
+    this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. Running automatically — jump, duck, or lean!';return p;
   }
   matchAppearance(people,poses,now){
     const candidates=people.map(p=>({p,score:appearanceScore(this.profile,p.appearance)})).filter(q=>q.score!==null&&q.score<.28&&Math.abs(q.p.size/this.anchorSize-1)<.6).sort((a,b)=>a.score-b.score);
@@ -78,7 +78,7 @@ export class PlayerLock {
 }
 
 export class Movement {
-  constructor(){this.base=null;this.previous=null;this.lastStep=-Infinity;this.lastSide=0;this.air=false;}
+  constructor(){this.base=null;this.previous=null;this.air=false;}
   update(b,now){
     if(!this.base){this.base={...b};this.previous=b;}
     const p=b.p,scale=this.base.size;
@@ -86,11 +86,7 @@ export class Movement {
     const duck=(b.y-this.base.y)/scale>.23;
     const jump=rise>.2&&!this.air;
     if(rise>.2)this.air=true;else if(rise<.09)this.air=false;
-    const knees=[25,26].every(i=>p[i]&&(p[i].visibility??0)>.45);
-    const diff=knees?(p[25].y-p[26].y)/scale:0;
-    const side=diff>.1?1:diff<-.1?-1:0;
-    if(side&&side!==this.lastSide){this.lastStep=now;this.lastSide=side;}
     const lean=(b.x-this.base.x)/scale;
-    return {moving:knees&&now-this.lastStep<650,duck,jump,lane:lean>.3?-1:lean<-.3?1:0};
+    return {duck,jump,lane:lean>.3?-1:lean<-.3?1:0};
   }
 }
