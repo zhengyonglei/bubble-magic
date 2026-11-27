@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as core from '../game-core.js';
 import * as modes from '../game-modes.js';
+import * as remixModule from '../fruit-remix.js';
 import * as tree from '../tree-game.js';
 import {GardenMusic} from '../music.js';
 // Execute the production update loop with synthetic input and a minimal DOM, without a camera.
@@ -12,22 +13,22 @@ function game(){
  const element=()=>({textContent:'',hidden:false,open:false,checked:false,dataset:{},classList:{toggle(){},add(){},remove(){}},setAttribute(){},removeAttribute(){},focus(){},pause(){},load(){},getContext:()=>ctx,getBoundingClientRect:()=>({left:0,top:0,width:1000,height:600}),querySelector:()=>element()});
  const node=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
  const rewards=[5,15,30].map(n=>{const e=element();e.dataset.reward=n;const progress=element(),small=element();e.querySelector=q=>q==='progress'?progress:small;return e;});
- const events={};const sandbox={...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
+ const events={};const sandbox={...remixModule,...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
  vm.createContext(sandbox);
  const source=readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('import.meta.url',JSON.stringify(new URL('../app.js',import.meta.url).href));
  vm.runInContext(source,sandbox);
  return {run:code=>vm.runInContext(code,sandbox),nodes,rewards,sandbox,events};
 }
 test('production loop auto-starts and scores each game with floating points',()=>{
- for(const type of ['bubbles','fruit','pets']){
+ for(const type of ['bubbles','fruit','pets','remix']){
  const g=game();g.run(`selectedGame='${type}';baseSession('demo');ready();for(let i=0;i<31;i++)step(.1,i*100);`);
  assert.equal(g.run('phase'),'playing');
- g.run(`targets=[];spawnClock=0;pointer={x:.5,y:.5,active:true};previousActive=true;recoveryUntil=0;mousePrev={x:.49,y:.5,time:3100};targets=[{id:99,x:.5,y:${type==='pets'?'.4495':'.5'},r:.05,type:'${type==='bubbles'?'bubble':type==='fruit'?'fruit':'cat'}',fruit:0,life:0,ttl:10,vx:0,vy:0,seed:0}];step(.05,3150);step(.01,3160);`);
+ g.run(`targets=[];spawnClock=0;pointer={x:.5,y:.5,active:true};previousActive=true;recoveryUntil=0;mousePrev={x:.49,y:.5,time:3100};targets=[{id:99,x:.5,y:${type==='pets'?'.4495':'.5'},r:.05,type:'${type==='bubbles'?'bubble':(type==='fruit'||type==='remix')?'fruit':'cat'}',fruit:0,life:0,ttl:10,vx:0,vy:0,seed:0}];step(.05,3150);step(.01,3160);`);
  assert.equal(g.run('round.score'),10,type);assert.equal(Number(g.nodes.get('score').textContent),10,type);assert.equal(g.run('totalPops'),1);assert.equal(g.run("labels.some(l=>l.text==='+10')"),true);
  }
 });
 test('production rewards fill bars and unlock crown and wings across rounds',()=>{const g=game();g.run("baseSession('demo');startRound();pointer={x:.5,y:.5,active:true};for(let i=0;i<30;i++){targets=[{id:100+i,x:.5,y:.5,r:.05,type:'bubble',life:0,ttl:10,vx:0,vy:0,seed:0}];spawnClock=0;step(.01,2000+i*10);}");assert.equal(g.run('rewardLevel(totalPops)'),3);assert.equal(g.rewards[1].querySelector('progress').value,15);assert.equal(g.rewards[2].querySelector('progress').value,30);g.run('startRound()');assert.equal(g.run('totalPops'),30);assert.equal(g.run('round.score'),0);});
-test('solo medium and hard spawn cacti; easy never does',()=>{for(const difficulty of ['easy','medium','hard']){const g=game();g.run(`selectedGame='fruit';setMode('${difficulty}');setPlayers(1);baseSession('demo');startRound();for(let i=0;i<100;i++)step(.1,i*100);`);assert.equal(g.run("targets.some(t=>t.type==='cactus')"),difficulty!=='easy',difficulty);}});
+test('solo medium and hard spawn cacti; easy never does',()=>{for(const difficulty of ['easy','medium','hard']){const g=game();g.run(`selectedGame='fruit';setMode('${difficulty}');setPlayers(1);baseSession('demo');startRound();let sawCactus=false;for(let i=0;i<100;i++){step(.1,i*100);sawCactus ||= targets.some(t=>t.type==='cactus');}`);assert.equal(g.run('sawCactus'),difficulty!=='easy',difficulty);}});
 
 test('caught animals remain full-size for visible entry and pause with the game',()=>{const g=game();g.run("selectedGame='pets';baseSession('demo');startRound();spawnClock=0;pointer={x:.5,y:.5,active:true};targets=[{id:99,x:.5,y:.4495,r:.05,type:'cat',life:0,ttl:10,vx:0,vy:0,seed:0}];step(.05,2000);for(let i=0;i<10;i++)step(.1,2100+i*100);");assert.equal(g.run('caughtPets.length'),1);assert.equal(g.run('caughtPets[0].r'),.05);const age=g.run('caughtPets[0].life');g.run('manualPause=true;step(.5,4000)');assert.equal(g.run('caughtPets[0].life'),age);g.run('manualPause=false;for(let i=0;i<20;i++)step(.1,4100+i*100)');assert.equal(g.run('caughtPets.length'),0);assert.equal(g.run('round.score'),10);});
 
@@ -42,7 +43,7 @@ test('side-entry fruit cannot be sliced until it is fully in view',()=>{const g=
 
 
 test('all games render active hands with loaded and fallback artwork',()=>{
- for(const type of ['bubbles','fruit','pets'])for(const loaded of [false,true]){
+ for(const type of ['bubbles','fruit','pets','remix'])for(const loaded of [false,true]){
   const g=game();
   g.run("selectedGame='"+type+"';baseSession('demo');startRound();pointer={x:.5,y:.5,active:true};art.garden.complete=true;art.garden.naturalWidth=1280;art.garden.naturalHeight=720;");
   if(loaded)g.run('for(const img of Object.values(art)){img.complete=true;img.naturalWidth=1024;img.naturalHeight=1024;}');
@@ -52,7 +53,7 @@ test('all games render active hands with loaded and fallback artwork',()=>{
 
 
 test('complete rounds render and end across games, difficulties and artwork states',()=>{
- for(const type of ['bubbles','fruit','pets'])for(const difficulty of ['easy','medium','hard'])for(const loaded of [false,true]){
+ for(const type of ['bubbles','fruit','pets','remix'])for(const difficulty of ['easy','medium','hard'])for(const loaded of [false,true]){
   const g=game();g.run("selectedGame='"+type+"';setMode('"+difficulty+"');baseSession('demo');startRound();pointer={x:.5,y:.5,active:true};");
   if(loaded)g.run('for(const img of Object.values(art)){img.complete=true;img.naturalWidth=1024;img.naturalHeight=1024;}');
   assert.doesNotThrow(()=>g.run('for(let i=1;i<=620;i++){if(selectedGame==="pets"&&i%10===0)shakePending=true;step(.1,i*100);draw(i*100);}'),type+' '+difficulty+' loaded='+loaded);
@@ -60,7 +61,7 @@ test('complete rounds render and end across games, difficulties and artwork stat
  }
 });
 test('camera players render all earned wearables with and without artwork',()=>{
- for(const type of ['bubbles','fruit','pets'])for(const loaded of [false,true]){
+ for(const type of ['bubbles','fruit','pets','remix'])for(const loaded of [false,true]){
   const g=game();g.run("selectedGame='"+type+"';baseSession('camera');startRound();totalPops=30;previewRewards=true;const pose=Array.from({length:33},(_,i)=>({x:i%2?.4:.6,y:i<10?.25:.5,visibility:1}));updatePlayers([pose],100);updatePlayers([pose],116);lastResult=116;frameCanvas.width=640;frameCanvas.height=480;");
   if(loaded)g.run('for(const img of Object.values(art)){img.complete=true;img.naturalWidth=1024;img.naturalHeight=1024;}');
   assert.doesNotThrow(()=>g.run('step(.016,116);draw(116);'));
@@ -112,7 +113,7 @@ test('camera torso jump advances tree while a stationary player does not',()=>{
 
 
 test('all games map the complete camera frame to the full play area at every aspect ratio',()=>{
- for(const type of ['bubbles','fruit','pets'])for(const [width,height] of [[1920,1016],[1000,600],[390,772]]){
+ for(const type of ['bubbles','fruit','pets','remix'])for(const [width,height] of [[1920,1016],[1000,600],[390,772]]){
  const g=game();g.run("selectedGame='"+type+"';W="+width+";H="+height+";frameCanvas.width=640;frameCanvas.height=480;");
  assert.equal(g.run('imageRect().w'),width);assert.equal(g.run('imageRect().h'),height);assert.equal(g.run('imageRect().x'),0);assert.equal(g.run('imageRect().y'),0);
  assert.equal(g.run('screenPoint({x:0,y:0}).x'),1);assert.equal(g.run('screenPoint({x:1,y:1}).x'),0);assert.equal(g.run('screenPoint({x:1,y:1}).y'),1);assert.equal(g.run('screenPoint({x:.5,y:.5}).x'),.5);
@@ -121,13 +122,13 @@ test('all games map the complete camera frame to the full play area at every asp
 
 
 test('starting any game enables its background music without a separate sound click',()=>{
- for(const type of ['bubbles','fruit','pets']){
+ for(const type of ['bubbles','fruit','pets','remix']){
   const g=game();let resumes=0;
   g.sandbox.window.AudioContext=class{state='running';resume(){resumes++;return Promise.resolve();}};
   g.sandbox.GardenMusic=class{update(on,game){this.on=on;this.game=game;}};
   assert.equal(g.run('sound'),true);
   g.run("selectedGame='"+type+"';baseSession('demo');startRound();step(.016,100);");
-  assert.equal(resumes,1);assert.equal(g.run('music.on'),true);assert.equal(g.run('music.game'),type);
+  assert.equal(resumes,1);assert.equal(g.run('music.on'),true);assert.equal(g.run('music.game'),type==='remix'?'fruit':type);
   g.nodes.get('sound').onclick();assert.equal(g.run('music.on'),false);
   g.run("baseSession('demo');startRound();step(.016,116)");assert.equal(g.run('music.on'),false);assert.equal(resumes,1);
  }
@@ -141,3 +142,5 @@ test('camera and video session starts also unlock audio',()=>{
 
 
 test('tree party has no difficulty or hazards and releases larger mixed batches',()=>{const g=game();g.run("selectedGame='fruit';setMode('hard');chooseGame('pets');baseSession('demo');startRound();pointer={x:.5,y:.8,active:true};for(let i=0;i<8;i++){shakeCooldown=0;shakePending=true;step(.1,100+i*100);draw(100+i*100);}");assert.equal(g.nodes.get('.mode-picker').hidden,true);assert.equal(g.run('difficulty'),'easy');assert.equal(g.run('config.hazards'),false);assert.equal(g.run('mode'),'gentle');assert.equal(g.run('level().max'),14);assert.ok(g.run('targets.length')>5);assert.equal(g.run("targets.some(t=>t.type==='cactus')"),false);});
+
+test('remix finger sweep scores a combo, draws juicy halves, resets on replay and never enables hazards',()=>{const g=game();g.run("chooseGame('remix');config.hazards=true;baseSession('demo');startRound();targets=[.35,.5,.65].map((x,i)=>({id:99+i,x,y:.5,r:.05,type:'fruit',fruit:i,life:.4,ttl:10,vx:0,vy:0,seed:0,color:'#ff8844'}));canvas.onpointerdown({pointerId:1,pointerType:'touch',clientX:200,clientY:300,preventDefault(){}});canvas.onpointermove({pointerId:1,pointerType:'touch',clientX:800,clientY:300,preventDefault(){}});canvas.onpointerup({pointerId:1,preventDefault(){}});step(.01,100);draw(100);");assert.equal(g.run('round.score'),60);assert.equal(g.run('config.hazards'),false);assert.equal(g.run('slices.filter(s=>s.remix).length'),6);assert.ok(g.run("labels.some(l=>l.text.includes('3 FRUIT COMBO'))"));g.run('manualPause=true;step(.1,200)');assert.equal(g.run('remix.clock'),.01);g.run('startRound()');assert.equal(g.run('remix.swipes.size'),0);assert.equal(g.run('round.score'),0);});

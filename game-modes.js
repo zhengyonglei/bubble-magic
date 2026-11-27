@@ -4,6 +4,7 @@ export const LEVELS={
  hard:{label:'Hard',interval:.43,max:12,speed:.055,drift:.055,radius:.037,hazardEvery:4}
 };
 export const GAMES={
+ remix:{title:'Fruit Slice Remix · Preview',description:'Sweep through juicy waves! Slice three fruit in one motion for a combo. No obstacles.',verb:'sliced',noun:'fruit'},
  bubbles:{title:'Bubble Magic',icon:'🫧',description:'Reach for floating bubbles and make them pop.',verb:'popped',noun:'bubbles'},
  fruit:{title:'Fruit Slice',icon:'🍉',description:'Swipe through fruit tossed into the air. Leave a glowing trail!',verb:'sliced',noun:'fruit'},
  pets:{title:'Cats & Dogs Catch',icon:'🐱',description:'Jump to make animals and fruit appear in the tree. Keep jumping to shake them loose, then catch with your hand-held net!',verb:'caught',noun:'treasures'}
