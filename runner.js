@@ -1,4 +1,4 @@
-import {Runner,PlayerLock,Movement} from './runner-core.js';
+import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-03';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
@@ -26,7 +26,7 @@ $('camera').onclick=async()=>{
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js');
+    worker=new Worker('./vision-worker.js?v=runner-03');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(data.type==='ready'){ready=true;$('tracking').textContent=lock.reason;}
