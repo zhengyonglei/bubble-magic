@@ -1,14 +1,16 @@
-import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-05';
-import {appearance,drawTracking} from './runner-tracking.js?v=runner-05';
+import {RunnerEffects} from './runner-effects.js?v=runner-06';
+import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-06';
+import {appearance,drawTracking} from './runner-tracking.js?v=runner-06';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
 let detected=[],selectedIndex=-1,outlineStamp=0;
+const effects=new RunnerEffects(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false);
 const held=new Set();let w=0,h=0;
 function clearInput(){held.clear();motion={};}
 function stopCamera(){session++;lock.reset();detected=[];selectedIndex=-1;drawTracking($('tracking-overlay').getContext('2d'),[],-1,false,480,360);worker?.terminate();worker=null;stream?.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;ready=false;busy=false;motion={};$('camera-view').hidden=true;}
-function begin(){stopCamera();game=new Runner();active=true;paused=false;mode='demo';clearInput();$('welcome').hidden=true;$('finish').hidden=true;$('controls').hidden=false;$('pause').textContent='Pause';canvas.focus();}
-$('demo').onclick=begin;$('again').onclick=begin;
+function begin(){stopCamera();effects.reset();movement=new Movement();lastPose=0;lastCapture=0;stamp=0;game=new Runner();active=true;paused=false;mode='demo';clearInput();$('welcome').hidden=true;$('finish').hidden=true;$('controls').hidden=false;$('pause').textContent='Pause';canvas.focus();}
+$('demo').onclick=begin;$('again').onclick=()=>mode==='camera'?startCamera():begin();
 $('stop-camera').onclick=()=>{stopCamera();mode='demo';clearInput();};
 $('select').onclick=()=>{selectedIndex=-1;lock.reset();movement=new Movement();motion={};lastPose=0;};
 $('pause').onclick=()=>{if(!active)return;paused=!paused;clearInput();$('pause').textContent=paused?'Resume':'Pause';if(!paused)canvas.focus();};
@@ -21,16 +23,17 @@ document.querySelectorAll('[data-action]').forEach(b=>{b.onpointerdown=e=>{e.pre
 function suspend(){clearInput();if(active){paused=true;$('pause').textContent='Resume';}if(mode==='camera'){lock.wait('Paused — checking your saved player when you return.');lastPose=0;}}
 window.addEventListener('blur',suspend);document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();stream?.getVideoTracks().forEach(t=>t.enabled=!document.hidden);});window.addEventListener('pagehide',stopCamera);
 function heldAction(a){return [...held].some(k=>keys[k]===a||k.endsWith(':'+a));}
-$('camera').onclick=async()=>{
+async function startCamera(){
   begin();mode='camera';$('camera-view').hidden=false;lock=new PlayerLock();movement=new Movement();lastPose=0;const token=session;
   $('tracking').textContent='Opening camera and loading the movement model…';
   try{
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-05');
+    worker=new Worker('./vision-worker.js?v=runner-06');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
+      if(token!==session){data.frame?.close();return;}
       if(data.type==='ready'){ready=true;$('tracking').textContent=lock.reason;}
       if(data.type==='error'){busy=false;ready=false;motion={};$('tracking').textContent=data.message;}
       if(data.type==='result'){
@@ -47,7 +50,8 @@ $('camera').onclick=async()=>{
     };
     worker.postMessage({type:'init',players:4,cutout:false});
   }catch(e){if(token===session){stopCamera();mode='demo';$('message').textContent='Camera unavailable. Keyboard and touch controls are ready.';game.message='Camera unavailable. Keyboard and touch controls are ready.';}}
-};
+}
+$('camera').onclick=startCamera;
 const capture=document.createElement('canvas');capture.width=480;capture.height=360;const cap=capture.getContext('2d');
 async function infer(now){
   if(!ready||busy||paused||document.hidden||now-lastCapture<100||$('video').readyState<2)return;
@@ -113,7 +117,7 @@ function draw(){
  if(item.kind==='star')star(x,1+Math.sin(t*2+item.z)*.12,z);
  if(item.kind==='log'){box(x,0,z,1.22,.6,.65,bark);box(x,.6,z,.95,.09,.48,leaf);for(const dx of [-.4,0,.4])box(x+dx,.08,z-.33,.045,.43,.015,['#513e30']);box(x+.3,.62,z,.18,.18,.18,bark);}
  if(item.kind==='arch'){for(const dx of [-.6,.6]){box(x+dx,0,z,.19,2,.22,bark);box(x+dx,.05,z,.31,.16,.32,stone);}box(x,1.4,z,1.4,.34,.55,bark);box(x,1.74,z,1.65,.28,.8,leaf);for(const dx of [-.4,0,.4])box(x+dx,1.43,z-.29,.12,.24,.035,['#efca6c']);}}
- const walk=active&&!paused?Math.sin(travel*3)*.17:0;explorer(game.x,game.height(),game.duck,walk);
+ const walk=active&&!paused?Math.sin(travel*3)*.17:0;explorer(game.x+(effects.reduced?0:Math.sin(effects.hit*35)*effects.hit*.08),game.height(),game.duck,walk);
  faces.sort((a,b)=>b.z-a.z);for(const f of faces){ctx.fillStyle=f.color;ctx.beginPath();f.vertices.forEach((v,i)=>{const p=project(v);i?ctx.lineTo(...p):ctx.moveTo(...p);});ctx.closePath();ctx.fill();const fog=Math.min(.76,Math.max(0,(f.z-15)/100));if(fog){ctx.globalAlpha=fog;ctx.fillStyle='#c6e7ce';ctx.fill();ctx.globalAlpha=1;}}
  ctx.fillStyle='#fff0b0';for(let i=0;i<16;i++){const px=noise(i+90)*w+Math.sin(t*.3+i)*20,py=h*(.3+noise(i+130)*.5)+Math.sin(t+i)*9;ctx.globalAlpha=.25+noise(i)*.35;ctx.fillRect(px,py,2,2);}ctx.globalAlpha=1;
 }
@@ -121,9 +125,11 @@ function frame(now){const dt=(now-last)/1000;last=now;
  if(mode==='camera'&&active){infer(now);if(outlineStamp&&now-outlineStamp>900){drawTracking($('tracking-overlay').getContext('2d'),[],-1,true,480,360);outlineStamp=0;}}
  const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
  if(active){game.step(dt,{moving:true,duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
+ for(const event of game.events.splice(0))effects.emit(event);
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
  const message=paused?'Adventure paused. Take your time.':trackingPause?lock.reason:game.message;if($('message').textContent!==message)$('message').textContent=message;
- if(game.finished){active=false;clearInput();stopCamera();$('finish').hidden=false;$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}
- draw();requestAnimationFrame(frame);
+ if(game.finished){active=false;clearInput();stopCamera();$('finish').hidden=false;$('again').textContent=mode==='camera'?'Play again · select player':'Another adventure';$('controls').hidden=true;$('result').textContent=`You explored 350 metres and brought home ${game.stars} garden stars. Every step counts!`;}}
+ effects.step(dt,document.hidden||paused||(active&&trackingPause));
+ draw();const overlay=$('effects');if(overlay.width!==w||overlay.height!==h){overlay.width=w;overlay.height=h;}effects.draw(overlay.getContext('2d'),w,h);requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

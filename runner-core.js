@@ -1,7 +1,7 @@
-import {appearanceScore} from './runner-tracking.js?v=runner-05';
+import {appearanceScore} from './runner-tracking.js?v=runner-06';
 // Pure simulation and conservative session tracking. Appearance cues remain in session memory only.
 export class Runner {
-  constructor(){this.distance=0;this.lane=0;this.x=0;this.jump=0;this.duck=false;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':i%7===6?'arch':'star',done:false}));}
+  constructor(){this.events=[];this.distance=0;this.lane=0;this.x=0;this.jump=0;this.duck=false;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':i%7===6?'arch':'star',done:false}));}
   hop(){if(this.jump===0&&!this.finished)this.jump=.85;}
   step(dt,{moving=false,duck=false,paused=false}={}){
     if(paused||this.finished)return;
@@ -11,11 +11,11 @@ export class Runner {
     const old=this.distance;this.distance=Math.min(350,old+dt*6);
     for(const item of this.items){if(item.done||item.z>this.distance||item.z<=old)continue;item.done=true;
       if(Math.abs(item.lane*1.5-this.x)>.65)continue;
-      if(item.kind==='star'){this.stars++;this.message='Lovely! A star for your garden.';}
-      else if(item.kind==='log'&&this.height()<.6||item.kind==='arch'&&!duck)this.message='Soft bump! Keep exploring — your stars are safe.';
-      else this.message=item.kind==='log'?'Super jump!':'Lovely duck!';
+      if(item.kind==='star'){this.events.push({type:'star',lane:item.lane});this.stars++;this.message='Lovely! A star for your garden.';}
+      else if(item.kind==='log'&&this.height()<.6||item.kind==='arch'&&!duck){this.events.push({type:'hit',kind:item.kind,lane:item.lane});this.message='Soft bump! Keep exploring — your stars are safe.';}
+      else{this.events.push({type:'clear',kind:item.kind,lane:item.lane});this.message=item.kind==='log'?'Super jump!':'Lovely duck!';}
     }
-    if(this.distance>=350){this.finished=true;this.message='You made it to the rainbow grove!';}
+    if(this.distance>=350){this.finished=true;this.events.push({type:'finish',lane:0});this.message='You made it to the rainbow grove!';}
   }
   height(){return Math.sin(this.jump/.85*Math.PI)*1.55;}
 }
