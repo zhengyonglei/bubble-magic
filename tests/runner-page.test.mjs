@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
 import {Runner,PlayerLock,Movement} from '../runner-core.js';
+import {appearance,drawTracking} from '../runner-tracking.js';
 function page(width=1280,height=720){
  const events={},els={},buttons=['left','move','jump','duck','right'].map(action=>({dataset:{action},setPointerCapture(){}}));
  const context2d=new Proxy({createLinearGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]??(()=>{})});
  const element=id=>els[id]??=( {hidden:false,textContent:'',focus(){},getBoundingClientRect:()=>({width,height}),getContext:()=>context2d});
  const document={getElementById:element,createElement:()=>element('capture'),querySelectorAll:()=>buttons,addEventListener:(n,f)=>events[n]=f};
  const window={addEventListener:(n,f)=>events[n]=f};
- const c=vm.createContext({Runner,PlayerLock,Movement,document,window,performance:{now:()=>0},requestAnimationFrame(){},console});
- vm.runInContext(readFileSync(new URL('../runner.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/,''),c);
+ const c=vm.createContext({Runner,PlayerLock,Movement,appearance,drawTracking,document,window,performance:{now:()=>0},requestAnimationFrame(){},console});
+ vm.runInContext(readFileSync(new URL('../runner.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),c);
  return {c,els,events,buttons,run:s=>vm.runInContext(s,c),key:(code)=>events.keydown({code,target:{tagName:'CANVAS'},preventDefault(){}})};
 }
 test('production runner draws, marches, scores, pauses and restarts',()=>{const p=page();p.els.demo.onclick();p.key('KeyW');for(let n=1;n<260;n++)p.run(`frame(${n*16})`);assert.ok(+p.els.stars.textContent>0);assert.ok(p.run('game.distance')>20);p.els.pause.onclick();const d=p.run('game.distance');p.run('frame(5000)');assert.equal(p.run('game.distance'),d);p.els.again.onclick();assert.equal(p.run('game.distance'),0);assert.equal(p.run('held.size'),0);});

@@ -1,4 +1,5 @@
-// Pure simulation and conservative session tracking. No biometric identity or storage.
+import {appearanceScore} from './runner-tracking.js?v=runner-04';
+// Pure simulation and conservative session tracking. Appearance cues remain in session memory only.
 export class Runner {
   constructor(){this.distance=0;this.lane=0;this.x=0;this.jump=0;this.duck=false;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':i%7===6?'arch':'star',done:false}));}
   hop(){if(this.jump===0&&!this.finished)this.jump=.85;}
@@ -31,19 +32,20 @@ export function body(p){
 
 export class PlayerLock {
   constructor(){this.reset();}
-  reset(){this.target=null;this.candidate=null;this.since=0;this.last=0;this.blocked=false;this.waiting=false;this.reason='Stand in the outline and raise both hands.';}
+  reset(){this.target=null;this.profile=null;this.anchorSize=0;this.recovery=null;this.candidate=null;this.since=0;this.last=0;this.blocked=false;this.waiting=false;this.reason='Stand in the center and raise both hands.';}
   wait(reason){this.waiting=true;this.reason=reason;return null;}
-  update(poses,now){
-    const people=poses.map(body).filter(Boolean);
-    if(this.blocked)return null;
+  update(poses,now,features=[]){
+    const people=poses.map((raw,i)=>{const b=body(raw);return b?{...b,appearance:features[i],index:i}:null;}).filter(Boolean);
+    if(this.blocked&&!this.profile)return null;
     if(!this.target){
       // Select one visible torso with raised hands; ankles are not needed for identity.
       const p=people.length===1&&poses.length===1&&people[0];
       if(!p||!p.raised||Math.abs(p.x-.5)>.18){this.candidate=null;this.since=now;return null;}
       if(!this.candidate||Math.abs(p.x-this.candidate.x)>.08||Math.abs(p.size/this.candidate.size-1)>.2){this.candidate=p;this.since=now;return null;}
       if(now-this.since<1200)return null;
-      this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
+      this.target=p;this.profile=p.appearance||null;this.anchorSize=p.size;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
     }
+    if(this.profile)return this.matchAppearance(people,poses,now);
     const prev=this.target;
     // Allow the torso travel of a jump or lean, including slower inference intervals.
     const matches=people.filter(p=>Math.abs(p.x-prev.x)<.14&&Math.abs(p.y-prev.y)<.22&&Math.abs(p.size/prev.size-1)<.45);
@@ -57,6 +59,22 @@ export class PlayerLock {
     if(!p)return this.wait('Brief tracking gap — hold your position. Resuming automatically…');
     this.target=p;this.last=now;this.waiting=false;this.reason='Player selected. March to explore!';return p;
   }
+  matchAppearance(people,poses,now){
+    const candidates=people.map(p=>({p,score:appearanceScore(this.profile,p.appearance)})).filter(q=>q.score!==null&&q.score<.28&&Math.abs(q.p.size/this.anchorSize-1)<.6).sort((a,b)=>a.score-b.score);
+    const best=candidates[0],p=best?.p;
+    const overlap=p&&poses.some(raw=>{if(raw===p.p)return false;const pts=[11,12,23,24].map(i=>raw?.[i]).filter(q=>q&&(q.visibility??0)>.25);return pts.length&&Math.abs(pts.reduce((n,q)=>n+q.x,0)/pts.length-p.x)<.28;});
+    if(!p||overlap||(candidates[1]&&candidates[1].score-best.score<.12)){
+      this.recovery=null;return this.wait(overlap?'Players overlap — separate to resume.':candidates.length>1?'Similar appearances — keep only the selected player in view.':'Looking for your saved player — face the camera with your shirt visible.');
+    }
+    const continuous=!this.waiting&&now-this.last<900&&Math.abs(p.x-this.target.x)<.18&&Math.abs(p.y-this.target.y)<.25;
+    if(!continuous){
+      if(!this.recovery||Math.abs(p.x-this.recovery.x)>.12||now-this.recovery.last>900)this.recovery={x:p.x,since:now,last:now,frames:1};
+      else{this.recovery.x=p.x;this.recovery.last=now;this.recovery.frames++;}
+      if(now-this.recovery.since<450||this.recovery.frames<3)return this.wait('Found your player — confirming appearance…');
+    }
+    this.recovery=null;this.target=p;this.last=now;this.waiting=false;this.blocked=false;this.reason='Player locked · session appearance remembered';return p;
+  }
+
 }
 
 export class Movement {

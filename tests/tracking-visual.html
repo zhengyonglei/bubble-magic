@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Tracking overlay visual fixture</title>
+<style>body{background:#143b37;color:#fff;font:18px system-ui;padding:25px}section{display:flex;gap:20px}canvas{width:480px;height:360px;background:#274f4c;border:1px solid #82b9aa;border-radius:14px}p{max-width:750px}</style><h1>Synthetic tracking overlay check</h1><p>Generated landmark fixtures, not webcam footage. The selected player is green; another detection is blue. Recovery is amber.</p><section><canvas id="locked" width="480" height="360"></canvas><canvas id="waiting" width="480" height="360"></canvas></section>
+<script type="module">
+import {drawTracking} from '../runner-tracking.js?v=runner-04';
+function person(x){const p=Array.from({length:33},()=>({x,y:.2,visibility:0}));for(const [i,dx,y] of [[0,0,.16],[11,-.06,.28],[12,.06,.28],[13,-.10,.4],[14,.1,.4],[15,-.14,.52],[16,.14,.52],[23,-.045,.55],[24,.045,.55],[25,-.05,.71],[26,.05,.71],[27,-.06,.91],[28,.06,.91]])p[i]={x:x+dx,y,visibility:.99};return p;}
+const poses=[person(.3),person(.75)];drawTracking(document.getElementById('locked').getContext('2d'),poses,0,false,480,360);drawTracking(document.getElementById('waiting').getContext('2d'),poses,0,true,480,360);
+</script>

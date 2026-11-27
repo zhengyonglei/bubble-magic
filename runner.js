@@ -1,14 +1,16 @@
-import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-03';
+import {Runner,PlayerLock,Movement} from './runner-core.js?v=runner-04';
+import {appearance,drawTracking} from './runner-tracking.js?v=runner-04';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
+let detected=[],selectedIndex=-1,outlineStamp=0;
 const held=new Set();let w=0,h=0;
 function clearInput(){held.clear();motion={};}
-function stopCamera(){session++;worker?.terminate();worker=null;stream?.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;ready=false;busy=false;motion={};$('camera-view').hidden=true;}
+function stopCamera(){session++;lock.reset();detected=[];selectedIndex=-1;drawTracking($('tracking-overlay').getContext('2d'),[],-1,false,480,360);worker?.terminate();worker=null;stream?.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;ready=false;busy=false;motion={};$('camera-view').hidden=true;}
 function begin(){stopCamera();game=new Runner();active=true;paused=false;mode='demo';clearInput();$('welcome').hidden=true;$('finish').hidden=true;$('controls').hidden=false;$('pause').textContent='Pause';canvas.focus();}
 $('demo').onclick=begin;$('again').onclick=begin;
 $('stop-camera').onclick=()=>{stopCamera();mode='demo';clearInput();};
-$('select').onclick=()=>{lock.reset();movement=new Movement();motion={};lastPose=0;};
+$('select').onclick=()=>{selectedIndex=-1;lock.reset();movement=new Movement();motion={};lastPose=0;};
 $('pause').onclick=()=>{if(!active)return;paused=!paused;clearInput();$('pause').textContent=paused?'Resume':'Pause';if(!paused)canvas.focus();};
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('message').textContent='Fullscreen unavailable. You can use the browser fullscreen command.';}};
 function action(a){if(!active||paused||mode==='camera')return;if(a==='left')game.lane=Math.max(-1,game.lane-1);if(a==='right')game.lane=Math.min(1,game.lane+1);if(a==='jump')game.hop();}
@@ -16,7 +18,7 @@ const keys={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'
 window.addEventListener('keydown',e=>{const a=keys[e.code];if(!a||!active||e.target.tagName==='BUTTON'||e.target.tagName==='A')return;e.preventDefault();if(!e.repeat)action(a);held.add(e.code);});
 window.addEventListener('keyup',e=>held.delete(e.code));
 document.querySelectorAll('[data-action]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.add(`pointer:${e.pointerId}:${b.dataset.action}`);action(b.dataset.action);};const end=e=>held.delete(`pointer:${e.pointerId}:${b.dataset.action}`);b.onpointerup=end;b.onpointercancel=end;b.onlostpointercapture=end;});
-function suspend(){clearInput();if(active){paused=true;$('pause').textContent='Resume';}if(mode==='camera'){lock.reset();movement=new Movement();lastPose=0;}}
+function suspend(){clearInput();if(active){paused=true;$('pause').textContent='Resume';}if(mode==='camera'){lock.wait('Paused — checking your saved player when you return.');lastPose=0;}}
 window.addEventListener('blur',suspend);document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();stream?.getVideoTracks().forEach(t=>t.enabled=!document.hidden);});window.addEventListener('pagehide',stopCamera);
 function heldAction(a){return [...held].some(k=>keys[k]===a||k.endsWith(':'+a));}
 $('camera').onclick=async()=>{
@@ -26,19 +28,21 @@ $('camera').onclick=async()=>{
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-03');
+    worker=new Worker('./vision-worker.js?v=runner-04');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(data.type==='ready'){ready=true;$('tracking').textContent=lock.reason;}
       if(data.type==='error'){busy=false;ready=false;motion={};$('tracking').textContent=data.message;}
       if(data.type==='result'){
-        data.frame?.close();busy=false;
-        if(token!==session||paused||document.hidden)return;
+        busy=false;
+        if(token!==session||paused||document.hidden){data.frame?.close();return;}
+        let features=[];try{if(data.frame){cap.drawImage(data.frame,0,0,480,360);const pixels=cap.getImageData(0,0,480,360);features=data.landmarks.map(p=>appearance(pixels,p));}}catch{}finally{data.frame?.close();}
+        detected=data.landmarks;outlineStamp=performance.now();selectedIndex=-1;
         const now=performance.now();
         // Discard late inference instead of letting an old pose control a new frame.
         if(now-data.stamp>700){motion={};lock.wait('Camera processing is slow — trail paused until a fresh frame arrives.');}
-        else{const b=lock.update(data.landmarks,now);motion=b?movement.update(b,now):{};if(b){lastPose=now;if(![25,26].every(i=>(b.p[i]?.visibility??0)>.45))lock.reason='Player selected. Step back so the camera can see both knees.';game.lane=motion.lane;if(motion.jump)game.hop();}}
-        $('tracking').textContent=lock.reason;
+        else{const b=lock.update(data.landmarks,now,features);if(b)selectedIndex=b.index;else if(lock.target){const nearby=data.landmarks.findIndex(p=>p[11]&&p[23]&&Math.abs((p[11].x+p[23].x)/2-lock.target.x)<.15);selectedIndex=nearby;}motion=b?movement.update(b,now):{};if(b){lastPose=now;if(![25,26].every(i=>(b.p[i]?.visibility??0)>.45))lock.reason='Player selected. Step back so the camera can see both knees.';game.lane=motion.lane;if(motion.jump)game.hop();}}
+        $('tracking').textContent=lock.reason;drawTracking($('tracking-overlay').getContext('2d'),detected,selectedIndex,lock.waiting,480,360);
       }
     };
     worker.postMessage({type:'init',players:4,cutout:false});
@@ -114,7 +118,7 @@ function draw(){
  ctx.fillStyle='#fff0b0';for(let i=0;i<16;i++){const px=noise(i+90)*w+Math.sin(t*.3+i)*20,py=h*(.3+noise(i+130)*.5)+Math.sin(t+i)*9;ctx.globalAlpha=.25+noise(i)*.35;ctx.fillRect(px,py,2,2);}ctx.globalAlpha=1;
 }
 function frame(now){const dt=(now-last)/1000;last=now;
- if(mode==='camera'&&active)infer(now);
+ if(mode==='camera'&&active){infer(now);if(outlineStamp&&now-outlineStamp>900){drawTracking($('tracking-overlay').getContext('2d'),[],-1,true,480,360);outlineStamp=0;}}
  const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
  if(active){game.step(dt,{moving:mode==='camera'?!!motion.moving:heldAction('move'),duck:mode==='camera'?!!motion.duck:heldAction('duck'),paused:paused||trackingPause});
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
