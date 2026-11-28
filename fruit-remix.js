@@ -1,17 +1,22 @@
-import {fruitLaunch,fruitSize} from './game-modes.js?v=0.13.0';
+import {fruitSize} from './game-modes.js?v=0.13.0';
 export class FruitRemix {
  constructor(){this.clock=0;this.nextWave=.4;this.wave=0;this.swipes=new Map();this.banner='Ready, set, slice!';this.bannerUntil=2;}
  update(dt,elapsed,aspect,aimY=.42,random=Math.random,playerCount=1,duration=60){
   this.clock+=dt;if(this.clock<this.nextWave)return [];
   const people=Math.max(1,Math.min(4,Math.floor(playerCount)||1));
-  const stage=duration>60?elapsed%50:elapsed,finale=elapsed>=duration-10,base=finale?7:stage<15?3:stage<35?4:5,count=base+2*(people-1);
-  this.nextWave=this.clock+(finale?2.3:3.6);this.wave++;
+  const stage=duration>60?elapsed%50:elapsed,finale=elapsed>=duration-10,base=finale?8:stage<15?4:stage<35?5:6,count=base+2*(people-1);
+  this.nextWave=this.clock+(finale?2.2:2.8+random()*.4);this.wave++;
   this.banner=finale?'FRUIT SHOWER!':stage<15?'Sweep through a whole wave!':stage<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
+  const both=people>1||random()<.4,wide=random()<.5;
+  const entryY=.48+random()*.28,centerX=.26+random()*.48,centerY=Math.max(.26,Math.min(.53,aimY+(random()-.5)*.22)),flight=1.25+random()*.45;
   return Array.from({length:count},(_,i)=>{
-   const group=people>1?Math.floor(i/Math.ceil(count/2)):0,local=people>1?i%Math.ceil(count/2):i;
-   const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=(this.wave+group)%2;
-   const launch=fruitLaunch('easy',left,r,Math.max(.26,Math.min(.55,aimY+(local-((people>1?Math.ceil(count/2):count)-1)/2)*.035)),random,aspect);
-   return {...launch,x:launch.x+(left?-1:1)*local*.012,y:launch.y+local*.012,gravity:.36,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true};
+   const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=both?(this.wave+i)%2:this.wave%2;
+   const x=left?-(r*aspect*1.3+.02):1+r*aspect*1.3+.02;
+   const y=Math.max(.46,Math.min(.82,entryY+(random()-.5)*(wide?.25:.08)));
+   const apexY=Math.max(.24,Math.min(.56,y-.12,centerY+(random()-.5)*(wide?.20:.06)));
+   const aimX=Math.max(.23,Math.min(.77,centerX+(random()-.5)*(wide?.48:.15)));
+   const apexTime=flight+(random()-.5)*.18,gravity=2*(y-apexY)/(apexTime*apexTime);
+   return {x,y,vx:(aimX-x)/apexTime,vy:-gravity*apexTime,gravity,tossed:true,ttl:10,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true};
   });
  }
  hit(handId,target,now){

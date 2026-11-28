@@ -85,3 +85,5 @@ Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and
 - v0.14.1: Fairy routes use cubic curves (S-shaped cross-screen sweeps and top/side swoops). No bottom entrances or exits; sprite mirroring follows horizontal tangent.
 
 - v0.15.0: Shared games offer 1/2/3/5 minute rounds on start screen and Settings (next-round change only). Remix cycles gentle/building/busy waves in 50-second phases for longer sessions, with a finale only in the final 10 seconds. Jungle Trail remains distance-based.
+
+- v0.15.1: Remix now varies side entry heights, apex locations, gentle flight times and cluster width; solo waves sometimes enter from both sides. Adds one fruit per wave and reduces ordinary gaps to 2.8–3.2s. Slice rules and original Fruit Slice untouched.

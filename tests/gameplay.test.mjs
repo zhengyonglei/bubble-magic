@@ -152,8 +152,8 @@ test('Remix admits four camera players, gives paired hands the same style and pr
  g.run("chooseGame('fruit');baseSession('camera');");assert.equal(g.run('sessionConfig.players'),1);assert.equal(g.nodes.get('player-picker').hidden,false);
 });
 test('production Remix waves use joined camera population and reduce after players leave',()=>{
- const g=game();g.run("chooseGame('remix');baseSession('camera');startRound();const group=[.12,.37,.62,.87].map(x=>Array.from({length:33},(_,i)=>({x:x+(i%2?.025:-.025),y:i<20?.4:.65,visibility:1})));for(let t=0;t<=1000;t+=100)updatePlayers(group,t);lastResult=1000;remix.nextWave=0;step(.01,1000);");assert.equal(g.run('targets.length'),9);
- g.run('for(let t=1100;t<=2700;t+=100)updatePlayers(group.slice(0,1),t);lastResult=2700;targets=[];remix.nextWave=0;step(.01,2700);');assert.equal(g.run('targets.length'),3);
+ const g=game();g.run("chooseGame('remix');baseSession('camera');startRound();const group=[.12,.37,.62,.87].map(x=>Array.from({length:33},(_,i)=>({x:x+(i%2?.025:-.025),y:i<20?.4:.65,visibility:1})));for(let t=0;t<=1000;t+=100)updatePlayers(group,t);lastResult=1000;remix.nextWave=0;step(.01,1000);");assert.equal(g.run('targets.length'),10);
+ g.run('for(let t=1100;t<=2700;t+=100)updatePlayers(group.slice(0,1),t);lastResult=2700;targets=[];remix.nextWave=0;step(.01,2700);');assert.equal(g.run('targets.length'),4);
 });
 test('Bubble Magic automatically joins four players and restores manual selection for other games',()=>{
  const g=game();g.run("config.players=1;chooseGame('bubbles');baseSession('camera');ready();const group=[.12,.37,.62,.87].map(x=>Array.from({length:33},(_,i)=>({x:x+(i%2?.025:-.025),y:i<20?.4:.65,visibility:1})));for(let t=0;t<=1000;t+=100)updatePlayers(group,t);lastResult=1000;step(.016,1000);draw(1000);");
