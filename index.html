@@ -6,7 +6,7 @@
   <meta name="description" content="Move, pop, and make a little magic. A cooperative camera-powered bubble game, processed privately in your browser.">
   <title>Play Garden · Move. Play. Smile.</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=0.15.2">
+  <link rel="stylesheet" href="./style.css?v=0.16.0">
 </head>
 <body>
   <header class="topbar">
@@ -29,12 +29,13 @@
     <section id="suite-menu" class="suite-menu" aria-labelledby="suite-title">
       <span class="pill">LITTLE MOVEMENTS. BIG ADVENTURES.</span><h1 id="suite-title">What shall we<br><em>play today?</em></h1><p>Pick a game. Bring your hands. Make some magic.</p>
       <div class="game-grid">
+        <button class="game-card puddle-card" data-game="puddles"><span class="game-art" aria-hidden="true">🦆💦</span><b>Muddy Puddle Party</b><span>Little jumps. Big giggles.</span><small>Land to splash · Up to 4 players</small></button>
         <button class="game-card bubble-card" data-game="bubbles"><span class="game-art atlas-icon sprite-bubble" aria-hidden="true"></span><b>Bubble Magic</b><span>Reach, pop, sparkle.</span><small>Flying fairies · giant bubble showers</small></button>
         <button class="game-card fruit-card" data-game="fruit"><span class="game-art atlas-icon sprite-melon" aria-hidden="true"></span><b>Fruit Slice</b><span>A juicy little adventure.</span><small>Swipe through flying fruit</small></button>
         <button class="game-card fruit-card" data-game="remix"><span class="game-art" aria-hidden="true">🍊✨</span><b>Fruit Slice Remix</b><span>PREVIEW · Juicy waves &amp; combos</span><small>No obstacles · Camera, mouse or touch</small></button>
         <button class="game-card pet-card" data-game="pets"><span class="game-art pet-icons" aria-hidden="true"><i class="atlas-icon sprite-cat"></i><i class="atlas-icon sprite-dog"></i></span><b>Cats &amp; Dogs Catch</b><span>Jump, stretch, catch!</span><small>Jump to shake · everyone catches</small></button>
         <a class="game-card" href="./runner.html" style="text-decoration:none;color:inherit"><span class="game-art" aria-hidden="true" style="font-size:72px">🌴</span><b>Jungle Trail</b><span>March into an adventure.</span><small>Solo 3D runner · prototype</small></a>
-      </div><p class="suite-note">1–2 players · Up to 4 in Bubble Magic &amp; Remix · Camera, mouse or touch · Play together<br>Video stays on your device. No recording.</p>
+      </div><p class="suite-note">1–2 players · Up to 4 in Puddles, Bubble Magic &amp; Remix · Camera, mouse or touch · Play together<br>Video stays on your device. No recording.</p>
     </section>
     <section class="welcome" id="welcome" aria-labelledby="welcome-title">
       <button class="text-btn" id="choose-game">All games</button>
@@ -82,11 +83,11 @@
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <label class="switch-row"><span>Preview all rewards<small>Try on the crown, wings and bracelets without changing your score. Start a camera or mouse session to see them.</small></span><input id="preview-rewards" type="checkbox"></label><button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.15.2 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.16.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>
   <noscript>This game needs JavaScript enabled in your browser.</noscript>
-  <script type="module" src="./app.js?v=0.15.2"></script>
+  <script type="module" src="./app.js?v=0.16.0"></script>
 </body>
 </html>

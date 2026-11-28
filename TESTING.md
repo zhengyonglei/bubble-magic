@@ -104,3 +104,8 @@ Collision completion no longer removes logs from rendering. Logs persist behind 
 
 ## Runner build 10 — gentle stumble and landing feedback
 Confirmed log hits trigger a 0.9-second backward tilt/arm spread and a gradual return from 35% running speed, with a small dust puff and quiet optional synthesized bump. Stars are preserved; no fall or restart. Successful log jumps emit one landing bounce/sparkle event. Reduced motion removes tilt/bounce. Audio initializes only on a play gesture, has a Sound toggle, and stops on pause/session end. Tests cover hit slowdown/recovery, pause/tracking freeze, no false hit on missing tracking, exactly-once landing events, sound lifecycle and mute/failure fallback. Actual speakers, HDMI and physical webcam remain untested.
+
+### Muddy Puddle Party (0.16.0)
+- Automated: small landing exactly once, no score on takeoff/jitter; stale tracking/teleports; hidden hands with visible torso; directed mud arrival/miss, expiry, solo and two-player effects; shuffled surprises and caps; demo pause, scoring, full round and replay.
+- Browser demo checked at 1280x720. Physical camera not available on development PC.
+- Laptop: stand far enough back for shoulders/hips (ideally feet) to show. Try small jumps alone, two people landing together, stepping away and returning, and pause/replay. Check that mud follows clothing without jumping to a newcomer. Try 2- and 5-minute rounds and HDMI fullscreen.

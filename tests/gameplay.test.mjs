@@ -7,6 +7,7 @@ import * as modes from '../game-modes.js';
 import * as fairyModule from '../bubble-fairies.js';
 import * as remixModule from '../fruit-remix.js';
 import * as tree from '../tree-game.js';
+import * as puddles from '../puddle-party.js';
 import {GardenMusic} from '../music.js';
 // Execute the production update loop with synthetic input and a minimal DOM, without a camera.
 function game(){
@@ -14,7 +15,7 @@ function game(){
  const element=()=>({textContent:'',hidden:false,open:false,checked:false,dataset:{},classList:{toggle(){},add(){},remove(){}},setAttribute(){},removeAttribute(){},focus(){},pause(){},load(){},getContext:()=>ctx,getBoundingClientRect:()=>({left:0,top:0,width:1000,height:600}),querySelector:()=>element()});
  const node=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
  const rewards=[5,15,30].map(n=>{const e=element();e.dataset.reward=n;const progress=element(),small=element();e.querySelector=q=>q==='progress'?progress:small;return e;});
- const events={};const sandbox={...fairyModule,...remixModule,...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
+ const events={};const sandbox={...puddles,...fairyModule,...remixModule,...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
  vm.createContext(sandbox);
  const source=readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('import.meta.url',JSON.stringify(new URL('../app.js',import.meta.url).href));
  vm.runInContext(source,sandbox);
@@ -173,4 +174,22 @@ test('all shared games honor each round length, pause time, and keep mid-round c
 });
 test('pending Remix clusters do not move or score, pause their delay, and release individually',()=>{
  const g=game();g.run("chooseGame('remix');baseSession('demo');startRound();remix.nextWave=100;pointer={x:.5,y:.5,active:true};mousePrev={x:.2,y:.5,time:90};targets=[{id:99,type:'fruit',fruit:0,x:.5,y:.5,r:.05,vx:.1,vy:0,life:0,ttl:10,seed:0,launchDelay:.8}];step(.1,100);");assert.equal(g.run('round.score'),0);assert.equal(g.run('targets[0].x'),.5);assert.equal(g.run('targets[0].life'),0);g.run('manualPause=true;step(.1,200)');assert.ok(Math.abs(g.run('targets[0].launchDelay')-.7)<1e-9);g.run('manualPause=false;pointer.active=false;step(.5,700);step(.3,1000);');assert.ok(g.run('targets[0].x')>.5);assert.ok(g.run('targets[0].life')>0);assert.equal(g.run('targets[0].launchDelay'),0);
+});
+
+test('puddle demo scores on landing, pauses, renders, ends and resets cleanly',()=>{
+ const g=game();g.run("chooseGame('puddles');baseSession('demo');startRound();$('shake-tree').onclick();step(.2,200);draw(200);");assert.equal(g.run('round.score'),0);
+ g.run('step(.26,460);draw(460)');assert.equal(g.run('round.score'),10);assert.equal(g.run('targets.length'),0);
+ g.run('step(.7,1160);draw(1160)');assert.ok(g.run('puddleParty.splats.length')>0);
+ const clock=g.run('puddleParty.clock');g.run('manualPause=true;step(1,2160)');assert.equal(g.run('puddleParty.clock'),clock);
+ g.run('manualPause=false;for(let i=0;i<610;i++){step(.1,2200+i*100);draw(2200+i*100);}');assert.equal(g.run('phase'),'ended');assert.equal(g.run('round.score'),10);
+ g.run('startRound()');assert.equal(g.run('puddleParty.splats.length'),0);assert.equal(g.run('round.score'),0);
+});
+test('puddle camera starts with torso visible even when hands are hidden, and scores physical landing',()=>{
+ const g=game();g.run(`chooseGame('puddles');baseSession('camera');ready();
+ const pose=Array.from({length:33},(_,i)=>({x:i%2?.4:.6,y:i<15?.4:.65,visibility:1}));pose[15].visibility=pose[16].visibility=0;
+ for(let i=0;i<60;i++){lastResult=i*100;updatePlayers([pose],i*100);step(.1,i*100);}
+ `);assert.equal(g.run('phase'),'playing');assert.equal(g.run('hands.length'),0);
+ g.run(`for(const [time,dy] of [[6000,0],[6100,-.04],[6200,-.05],[6300,-.03],[6400,0],[6500,0]]){lastResult=time;updatePlayers([pose.map(p=>({...p,y:p.y+dy}))],time);step(.1,time);draw(time);}`);
+ assert.equal(g.run('round.score'),10);
+ g.run('step(.1,7300)');const time=g.run('round.time');g.run('step(.1,7400)');assert.equal(g.run('round.time'),time);
 });

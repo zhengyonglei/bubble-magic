@@ -11,7 +11,7 @@ export class GardenMusic {
     if(!playing){this.bus.gain.value=0;this.playing=false;return;}
     if(!this.playing){this.next=c.currentTime+.03;this.playing=true;}
     this.bus.gain.value=.18;
-    const melodies={bubbles:[72,76,79,81,79,76,74,67],fruit:[72,79,76,81,79,74,76,67],pets:[76,74,72,67,72,79,76,74]};
+    const melodies={puddles:[60,64,67,64,69,67,64,62],bubbles:[72,76,79,81,79,76,74,67],fruit:[72,79,76,81,79,74,76,67],pets:[76,74,72,67,72,79,76,74]};
     const notes=melodies[game]||melodies.bubbles,interval=game==='fruit'?.26:.36;
     // Do not replay a backlog after a suspended tab or a long frame.
     if(this.next<c.currentTime)this.next=c.currentTime+.03;

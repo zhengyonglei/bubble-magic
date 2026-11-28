@@ -1,12 +1,12 @@
 {
   "name": "bubble-magic",
-  "version": "0.15.2",
+  "version": "0.16.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check app.js && node --check vision-worker.js && node --check game-core.js && node --check game-modes.js && node --check music.js && node --check tree-game.js && node --check runner-core.js && node --check runner.js && node --check runner-tracking.js && node --check runner-effects.js && node --check fruit-remix.js && node --check bubble-fairies.js && node --check runner-audio.js"
+    "check": "node --check app.js && node --check vision-worker.js && node --check game-core.js && node --check game-modes.js && node --check music.js && node --check tree-game.js && node --check runner-core.js && node --check runner.js && node --check runner-tracking.js && node --check runner-effects.js && node --check fruit-remix.js && node --check bubble-fairies.js && node --check puddle-party.js && node --check runner-audio.js"
   },
   "engines": {
     "node": ">=18"

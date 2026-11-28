@@ -1,18 +1,22 @@
-import {FairyGarden,moveFairyBubble,splitGiant} from './bubble-fairies.js?v=0.15.2';
-import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.15.2';
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.15.2';
-import {GardenMusic} from './music.js?v=0.12.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.15.2';
+import {PuddleParty,puddleBodies,drawPuddleScene,drawPuddles,drawPuddleEffects} from './puddle-party.js?v=0.16.0';
+import {FairyGarden,moveFairyBubble,splitGiant} from './bubble-fairies.js?v=0.16.0';
+import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.16.0';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.16.0';
+import {GardenMusic} from './music.js?v=0.16.0';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.16.0';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.15.2';
-const autoPlayers=(id=selectedGame)=>id==='remix'||id==='bubbles';
+const BUILD='0.16.0';
+const autoPlayers=(id=selectedGame)=>id==='remix'||id==='bubbles'||id==='puddles';
 const isFruit=()=>selectedGame==='fruit'||selectedGame==='remix';
 let fairyGarden=new FairyGarden();
+let puddleParty=new PuddleParty(),mudBodies=[],mudJump=false,demoLanding=0;
+function getMudBodies(now){if(source!=='demo')return puddleBodies(players,screenPoint,now);return [.32,.7].map((x,i)=>({id:'mud-demo-'+i,x:i===0&&pointer.active?clamp(pointer.x,.12,.88):x,y:.56,height:.23,width:.12,foot:.84,anchors:[{x:i===0&&pointer.active?clamp(pointer.x,.12,.88):x,y:.56}]}));}
+
 let remix=new FruitRemix(),remixRoster=new RemixRoster();
 const art={};for(const [name,file] of Object.entries({fairies:'fairies-ai-v2.png',treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
@@ -46,7 +50,7 @@ function status(text,error=false){$('status').textContent=text;$('status').hidde
 function toast(text){clearTimeout(toastTimer);$('toast').textContent=text;$('toast').hidden=false;toastTimer=setTimeout(()=>$('toast').hidden=true,2800);}
 function setMode(value){difficulty=value;mode=value==='easy'?'gentle':'challenge';config.hazards=selectedGame==='fruit'&&value!=='easy';$('hazards').checked=config.hazards;$('hazards').disabled=value==='easy'||selectedGame==='pets';$('level-note').textContent=value==='easy'?'Easy: no cacti. Try Medium or Hard for obstacles.':'Cacti appear during scored rounds, even with one player.';document.querySelectorAll('[data-mode]').forEach(button=>{const selected=button.dataset.mode===value;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});}
 document.querySelectorAll('[data-mode]').forEach(button=>button.onclick=()=>setMode(button.dataset.mode));
-function chooseGame(id){selectedGame=id;$('welcome-tip').textContent=(autoPlayers(id)?'Up to 4 players':'1–2 players')+' · Choose 1–5 minute rounds';$('player-picker').hidden=autoPlayers(id);$('player-setting').hidden=autoPlayers(id);$('auto-players').hidden=!autoPlayers(id);$('auto-players').textContent=id==='remix'?'Up to 4 players · Step into view to join. Cyan circles · Coral diamonds · Gold stars · Violet crosses':'Up to 4 players · Step into view to join. Pop and earn rewards together!';$('hazard-setting').hidden=id!=='fruit';document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode('easy');}if(id==='bubbles'||id==='remix')setMode('easy');document.querySelector('.mode-picker').hidden=id!=='fruit';$('level-note').hidden=id!=='fruit';$('demo').textContent='Play with mouse or touch';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
+function chooseGame(id){selectedGame=id;$('welcome-tip').textContent=(autoPlayers(id)?'Up to 4 players':'1–2 players')+' · Choose 1–5 minute rounds';$('player-picker').hidden=autoPlayers(id);$('player-setting').hidden=autoPlayers(id);$('auto-players').hidden=!autoPlayers(id);$('auto-players').textContent=id==='remix'?'Up to 4 players · Step into view to join. Cyan circles · Coral diamonds · Gold stars · Violet crosses':'Up to 4 players · Step into view to join. Pop and earn rewards together!';$('hazard-setting').hidden=id!=='fruit';document.querySelectorAll('[data-mode]').forEach(b=>{b.querySelector('small').innerHTML=({easy:'Few & slow<br>No obstacles',medium:id==='pets'?'More & faster<br>More treasures':'More & faster<br>A few cacti',hard:id==='pets'?'Lots & speedy<br>More treasures':'Lots & speedy<br>More cacti'})[b.dataset.mode];});if(id==='pets'){setPlayers(2);setMode('easy');}if(id==='bubbles'||id==='remix'||id==='puddles')setMode('easy');document.querySelector('.mode-picker').hidden=id!=='fruit';$('level-note').hidden=id!=='fruit';$('demo').textContent='Play with mouse or touch';if(id==='puddles')$('auto-players').textContent='Up to 4 players · Small jumps count · Land to splash your friends!';$('suite-menu').hidden=true;$('welcome').hidden=false;$('welcome-title').textContent=GAMES[id].title;$('game-description').textContent=GAMES[id].description;canvas.setAttribute('aria-label',GAMES[id].title+' play area. Move your pointer in mouse demo.');document.querySelector('.sky-label').textContent=GAMES[id].title;}
 function mainMenu(){home();document.querySelector('.sky-label').textContent='PLAY GARDEN';$('welcome').hidden=true;$('suite-menu').hidden=false;}
 document.querySelectorAll('[data-game]').forEach(button=>button.onclick=()=>chooseGame(button.dataset.game));$('all-games').onclick=mainMenu;$('choose-game').onclick=mainMenu;
 function setPlayers(n){config.players=Number(n);$('players').value=String(n);document.querySelectorAll('[data-players]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.players)===config.players)));}
@@ -85,7 +89,7 @@ function screenPoint(p){const r=imageRect();return {x:(r.x+(1-p.x)*r.w)/W,y:(r.y
 function stopMedia(){music?.update(false);epoch++;clearTimeout(modelTimer);modelTimer=null;worker?.terminate();worker=null;workerReady=false;busy=false;stream?.getTracks().forEach(t=>t.stop());stream=null;video.pause();video.srcObject=null;video.removeAttribute('src');video.load();if(objectURL)URL.revokeObjectURL(objectURL);objectURL=null;sample=null;players=[];hands=[];lastResult=0;lastVideoTime=-1;frameCtx.clearRect(0,0,frameCanvas.width,frameCanvas.height);}
 function home(){shakePending=false;music?.update(false);$('stage').classList.toggle('in-session',false);fingers.clear();swipeTrails.clear();popRings=[];stopMedia();source='none';phase='home';manualPause=false;round=null;targets=[];particles=[];labels=[];slices=[];status('');$('welcome').hidden=false;$('hud').hidden=true;$('results').hidden=true;$('ready-bar').hidden=true;$('play-controls').hidden=true;$('pause').textContent='Pause';$('sky-label')?.removeAttribute('hidden');}
 function fail(message){lastError=message;home();status(message,true);updateDiagnostics();}
-function baseSession(type){if(selectedGame==='remix')setMode('easy');jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){setMode('easy');config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config,players:autoPlayers()?4:config.players};remixRoster=new RemixRoster();targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=selectedGame!=='pets'||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent=formatTime(config.duration);$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=autoPlayers()?'Auto join · up to 4 · No obstacles':selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
+function baseSession(type){puddleParty=new PuddleParty();mudBodies=[];mudJump=false;demoLanding=0;if(selectedGame==='puddles'){setMode('easy');config.hazards=false;}if(selectedGame==='remix')setMode('easy');jumpTracker=new JumpTracker();treeNets=[];treeItems=[];shakePending=false;shakeCooldown=0;treeWobble=0;if(selectedGame==='pets'){setMode('easy');config.hazards=false;} if(selectedGame==='bubbles')setMode('easy');$('stage').classList.toggle('in-session',true);fingers.clear();popRings=[];stopMedia();source=type;phase='loading';sessionConfig={...config,players:autoPlayers()?4:config.players};remixRoster=new RemixRoster();targets=[];particles=[];labels=[];slices=[];round=null;manualPause=false;lastError='';delegate='none';inferMs=0;trackFPS=0;$('suite-menu').hidden=true;$('welcome').hidden=true;$('results').hidden=true;$('hud').hidden=false;$('ready-bar').hidden=true;$('play-controls').hidden=false;$('shake-tree').hidden=!['pets','puddles'].includes(selectedGame)||type!=='demo';$('pause').hidden=true;$('score').textContent='0';$('time').textContent=formatTime(config.duration);$('pop-count').textContent='Get ready…';$('combo').textContent='Find your hands';$('session-rules').textContent=autoPlayers()?'Auto join · up to 4 · No obstacles':selectedGame==='pets'?'Jump to shake · everyone catches':level().label+' · '+(config.players===1?'Solo':'Together')+' · '+(config.hazards&&difficulty!=='easy'?'Cacti on':'No obstacles');$('source-badge').textContent=type==='camera'?'LIVE CAMERA':type==='video'?'LOCAL VIDEO':type==='sample'?'SAMPLE PHOTO · NOT LIVE':'MOUSE / TOUCH · NO CAMERA';void enableAudio();return epoch;}
 function ready(){phase='ready';readyClock=0;$('ready-bar').hidden=false;$('pause').hidden=true;status('');if(source==='demo'){$('ready-title').textContent='Your pointer is a magic hand';$('ready-description').textContent=GAMES[selectedGame].description+' The round starts automatically in 3 seconds.';}else{$('ready-title').textContent='Find your hands';$('ready-description').textContent=(sessionConfig.players===1?'Solo play: keep your head and hands in view.':'Play together: stand side by side. One shared score.');}$('start-round').disabled=source!=='demo';spawnClock=0;}
 function launchWorker(token){
   worker=new Worker(new URL('./vision-worker.js',import.meta.url));
@@ -153,7 +157,7 @@ function updatePlayers(poses,now){
     hands.push({...point,id,playerId:player.id,trailSlot:player.slot,bodyWidth:Math.hypot((screenPoint(player.pose[11]).x-screenPoint(player.pose[12]).x),(screenPoint(player.pose[11]).y-screenPoint(player.pose[12]).y)*H/W),r:mode==='gentle'?.026:.019,confidence:p.visibility??1,seen:now,prev:old?{x:old.x,y:old.y,time:old.seen}:null});
   }
   if(autoPlayers())$('session-rules').textContent=`${players.length} / 4 joined · Step in to join · Shared score`;
-  if(phase==='ready'){$('start-round').disabled=hands.length===0;$('ready-title').textContent=players.length?`${players.length} player${players.length>1?'s':''} in view`:'Looking for players…';}
+  if(phase==='ready'){$('start-round').disabled=selectedGame==='puddles'?puddleBodies(players,screenPoint,now).length===0:hands.length===0;$('ready-title').textContent=players.length?`${players.length} player${players.length>1?'s':''} in view`:'Looking for players…';}
 }
 async function requestFrame(now){
   if(!workerReady||busy||document.hidden||phase==='ended'||phase==='home'||manualPause)return;
@@ -169,19 +173,19 @@ async function requestFrame(now){
   try{const bitmap=await createImageBitmap(capture);if(token!==epoch){bitmap.close();return;}worker.postMessage({type:'frame',frame:bitmap,timestamp:now},[bitmap]);}
   catch(error){if(token===epoch){busy=false;fail(`Frame processing failed: ${error.message}`);}}
 }
-function startRound(){fairyGarden=new FairyGarden();remix=new FruitRemix();jumpTracker=new JumpTracker();treeItems=[];shakeCooldown=0;shakePending=false;treeWobble=0;swipeTrails.clear();popRings=[];hazardClock=0;caughtPets=[];round=new Round(mode,config.duration);phase='playing';$('time').textContent=formatTime(round.duration);targets=[];particles=[];labels=[];slices=[];spawnClock=1;spawnCount=1;readyClock=0;manualPause=false;previousActive=false;mousePrev=null;$('ready-bar').hidden=true;$('results').hidden=true;$('pause').hidden=false;$('pause').textContent='Pause';status('');canvas.focus();}
-$('shake-tree').onclick=()=>{if(source==='demo'&&selectedGame==='pets'&&phase==='playing'&&!manualPause)shakePending=true;};
+function startRound(){puddleParty=new PuddleParty();mudJump=false;demoLanding=0;fairyGarden=new FairyGarden();remix=new FruitRemix();jumpTracker=new JumpTracker();treeItems=[];shakeCooldown=0;shakePending=false;treeWobble=0;swipeTrails.clear();popRings=[];hazardClock=0;caughtPets=[];round=new Round(mode,config.duration);phase='playing';$('time').textContent=formatTime(round.duration);targets=[];particles=[];labels=[];slices=[];spawnClock=1;spawnCount=1;readyClock=0;manualPause=false;previousActive=false;mousePrev=null;$('ready-bar').hidden=true;$('results').hidden=true;$('pause').hidden=false;$('pause').textContent='Pause';status('');canvas.focus();}
+$('shake-tree').onclick=()=>{if(source==='demo'&&selectedGame==='puddles'&&phase==='playing'&&!manualPause&&!$('settings').open&&demoLanding===0){demoLanding=.45;return;}if(source==='demo'&&selectedGame==='pets'&&phase==='playing'&&!manualPause)shakePending=true;};
 $('start-round').onclick=startRound;$('again').onclick=startRound;
 $('stop').onclick=home;$('finish').onclick=home;
 $('pause').onclick=()=>{manualPause=!manualPause;if(manualPause)music?.update(false);else void enableAudio();mousePrev=null;hands.forEach(h=>h.prev=null);$('pause').textContent=manualPause?'Resume':'Pause';};
 function pointerPosition(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/W,y:(e.clientY-r.top)/H};}
-canvas.onpointerdown=e=>{if(source!=='demo')return;e.preventDefault();const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}canvas.setPointerCapture?.(e.pointerId);fingers.set(e.pointerId,{...point,id:'finger:'+e.pointerId,direct:true,time:performance.now(),prev:null});};
+canvas.onpointerdown=e=>{if(source!=='demo')return;e.preventDefault();const point=pointerPosition(e);if(selectedGame==='puddles')$('shake-tree').onclick();if(e.pointerType==='mouse'){pointer={...point,active:true};return;}canvas.setPointerCapture?.(e.pointerId);fingers.set(e.pointerId,{...point,id:'finger:'+e.pointerId,direct:true,time:performance.now(),prev:null});};
 canvas.onpointermove=e=>{if(source!=='demo')return;const point=pointerPosition(e);if(e.pointerType==='mouse'){pointer={...point,active:true};return;}const old=fingers.get(e.pointerId);if(old){e.preventDefault();fingers.set(e.pointerId,{...old,...point,time:performance.now(),prev:old.prev||{x:old.x,y:old.y,time:old.time}});}};
 canvas.onpointerup=e=>{const finger=fingers.get(e.pointerId);if(finger){e.preventDefault();finger.released=true;}};
 canvas.onpointercancel=e=>fingers.delete(e.pointerId);
 canvas.onlostpointercapture=e=>{const f=fingers.get(e.pointerId);if(f&&!f.released)fingers.delete(e.pointerId);};
 canvas.onpointerleave=e=>{if(e.pointerType==='mouse'){pointer.active=false;mousePrev=null;}};
-canvas.onkeydown=e=>{if(source!=='demo')return;if(selectedGame==='pets'&&e.code==='Space'){e.preventDefault();$('shake-tree').onclick();return;}const d={ArrowLeft:[-.025,0],ArrowRight:[.025,0],ArrowUp:[0,-.025],ArrowDown:[0,.025]}[e.key];if(d){e.preventDefault();pointer.x=clamp(pointer.x+d[0],0,1);pointer.y=clamp(pointer.y+d[1],0,.8);pointer.active=true;}};
+canvas.onkeydown=e=>{if(source!=='demo')return;if(['pets','puddles'].includes(selectedGame)&&e.code==='Space'){e.preventDefault();$('shake-tree').onclick();return;}const d={ArrowLeft:[-.025,0],ArrowRight:[.025,0],ArrowUp:[0,-.025],ArrowDown:[0,.025]}[e.key];if(d){e.preventDefault();pointer.x=clamp(pointer.x+d[0],0,1);pointer.y=clamp(pointer.y+d[1],0,.8);pointer.active=true;}};
 document.addEventListener('visibilitychange',()=>{mousePrev=null;hands=[];if(document.hidden){music?.update(false);fingers.clear();stream?.getVideoTracks().forEach(t=>t.enabled=false);video.pause();}else{stream?.getVideoTracks().forEach(t=>t.enabled=true);if(source==='camera'||source==='video')video.play().catch(()=>fail('Video paused. Reopen the camera or video.'));}});
 window.addEventListener('pagehide',stopMedia);
 
@@ -226,34 +230,45 @@ function step(dt,now){
     mousePrev=pointer.active?{x:pointer.x,y:pointer.y,time:now}:null;
   }else if(now-lastResult>350){hands=[];if(now-lastResult>600)players=[];}
   if(selectedGame==='pets')treeNets=playerNets(hands,now,source==='demo');
+  if(selectedGame==='puddles')mudBodies=getMudBodies(now);
   const controls=hands;
-  const present=source==='demo'||(selectedGame==='pets'?treeNets.length>0:controls.length>0);
+  const present=source==='demo'||(selectedGame==='puddles'?mudBodies.length>0:selectedGame==='pets'?treeNets.length>0:controls.length>0);
   const active=present&&!manualPause&&!document.hidden&&!$('settings').open;
   if(active&&!previousActive){recoveryUntil=now+1000;hands.forEach(h=>{if(!h.direct)h.prev=null;});}
+  if(selectedGame==='puddles'&&!active){puddleParty.tracker.people.clear();demoLanding=0;mudJump=false;}
   previousActive=active;music?.update(sound&&active&&phase==='playing',selectedGame==='remix'?'fruit':selectedGame);
   if(phase==='ready'){
     readyClock=active?readyClock+dt:0;
-    $('ready-title').textContent=active?'Starting in '+Math.max(1,Math.ceil(3-readyClock))+'…':'Show your hands to start';
+    $('ready-title').textContent=active?'Starting in '+Math.max(1,Math.ceil(3-readyClock))+'…':(selectedGame==='puddles'?'Stand back so your body is in view':'Show your hands to start');
     $('ready-description').textContent=selectedGame==='pets'&&source!=='demo'?'Jump to shake the tree. Each player stretches both hands apart for a net.':'Every catch earns points and dress-up rewards once the countdown ends.';
+    if(selectedGame==='puddles')$('ready-description').textContent=source==='demo'?'Tap Jump! or press Space. Two pretend players demonstrate splashes.':'Keep shoulders and hips visible. Make a little jump, then land to splash!';
     $('pop-count').textContent='Get ready · scoring starts shortly';
     if(readyClock>=3)startRound();
   }
   if(phase==='playing'){
     if(manualPause)status('Paused. Take a breath, then press Resume.');
-    else if(!present)status(selectedGame==='pets'?'Show both hands to hold your net. The clock is paused.':'Step back into view with your hands visible. The clock is paused.');
+    else if(!present)status(selectedGame==='puddles'?'Step back so shoulders and hips are visible. The clock is paused.':selectedGame==='pets'?'Show both hands to hold your net. The clock is paused.':'Step back into view with your hands visible. The clock is paused.');
     else status('');
     round.tick(dt,active);
     if(round.finished){$('time').textContent='0:00';endRound();return;}
-    $('score').textContent=round.score.toLocaleString();$('pop-count').textContent=`${round.pops} ${round.pops===1?(selectedGame==='bubbles'?'bubble':selectedGame==='pets'?'treasure':'fruit'):GAMES[selectedGame].noun} ${GAMES[selectedGame].verb}`;
+    $('score').textContent=round.score.toLocaleString();$('pop-count').textContent=`${round.pops} ${round.pops===1?(selectedGame==='bubbles'?'bubble':selectedGame==='pets'?'treasure':selectedGame==='puddles'?'splash':'fruit'):GAMES[selectedGame].noun} ${GAMES[selectedGame].verb}`;
     const seconds=Math.ceil(round.remaining);$('time').textContent=`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;
-    $('combo').textContent=selectedGame==='remix'?(remix.clock<remix.bannerUntil?remix.banner:'One sweep · three fruit · combo!'):round.multiplier>1?`${round.multiplier}× sparkle streak!`:(mode==='challenge'&&config.hazards?'Avoid cacti · −20 points':selectedGame==='fruit'?'Swipe to slice':selectedGame==='pets'?'Jump to grow · jump again to drop · catch!':'Reach to pop');
+    $('combo').textContent=selectedGame==='puddles'?puddleParty.banner:selectedGame==='remix'?(remix.clock<remix.bannerUntil?remix.banner:'One sweep · three fruit · combo!'):round.multiplier>1?`${round.multiplier}× sparkle streak!`:(mode==='challenge'&&config.hazards?'Avoid cacti · −20 points':selectedGame==='fruit'?'Swipe to slice':selectedGame==='pets'?'Jump to grow · jump again to drop · catch!':'Reach to pop');
   }
   if(phase==='playing'&&active){
     hazardClock+=dt;
+    if(selectedGame==='puddles'){
+      if(demoLanding>0){demoLanding=Math.max(0,demoLanding-dt);if(demoLanding===0)mudJump=true;}
+      for(const event of puddleParty.update(dt,mudBodies,now,mudJump)){
+        round.hit({id:++targetId,type:'mud'});totalPops++;updateRewards();
+        labels.push({x:event.x*W,y:event.y*H-45,text:event.text+' +10',life:0});tone(puddleParty.count%3===0);
+      }
+      mudJump=false;$('score').textContent=round.score.toLocaleString();
+    }
     spawnClock+=dt;const practice=phase==='ready',interval=practice?1.3:level().interval;
     if(selectedGame==='remix'){for(const target of remix.update(dt,round.time,H/W,playerZone(spawnCount).y,Math.random,source==='demo'?1:remixRoster.tracks.filter(p=>p.joined&&now-p.seen<=1500).length,round.duration)){if(targets.length<32)targets.push({...target,id:++targetId});}}
     if(selectedGame==='bubbles')for(const target of fairyGarden.update(dt,H/W,Math.max(0,28-targets.length)))targets.push({...target,id:++targetId});
-    if(selectedGame!=='bubbles'&&selectedGame!=='remix'&&selectedGame!=='pets'&&spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
+    if(selectedGame!=='puddles'&&selectedGame!=='bubbles'&&selectedGame!=='remix'&&selectedGame!=='pets'&&spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
     if(selectedGame==='pets'){
       shakeCooldown=Math.max(0,shakeCooldown-dt);treeWobble=Math.max(0,treeWobble-dt);
       const bodies=players.map(p=>{const points=[11,12,23,24].map(i=>p.pose[i]);return {id:p.id,y:points.reduce((sum,v)=>sum+screenPoint(v).y,0)/4,height:Math.abs(screenPoint(p.pose[23]).y-screenPoint(p.pose[11]).y),confidence:Math.min(...points.map(v=>v.visibility??1))};});
@@ -305,7 +320,7 @@ function step(dt,now){
 
 function ellipse(x,y,rx,ry,fill){ctx.beginPath();ctx.ellipse(x,y,Math.max(0,rx),Math.max(0,ry),0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();}
 function star(x,y,r,fill,angle=0){ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.43:r;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr);}ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.restore();}
-function background(t){
+function background(t){if(selectedGame==='puddles'){drawPuddleScene(ctx,W,H,t);return;}
   if(artReady('garden')){const img=art.garden;const scale=Math.max(W/img.naturalWidth,H/img.naturalHeight);ctx.drawImage(img,(W-img.naturalWidth*scale)/2,(H-img.naturalHeight*scale)/2,img.naturalWidth*scale,img.naturalHeight*scale);if(phase==='home'){const wash=ctx.createLinearGradient(0,0,W,0);wash.addColorStop(0,'#f8f5ffdd');wash.addColorStop(.5,'#f8f5ff99');wash.addColorStop(1,'#f8f5ff00');ctx.fillStyle=wash;ctx.fillRect(0,0,W,H);}return;}
 
   const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#e6f4ff');g.addColorStop(.55,'#eee5ff');g.addColorStop(1,'#c8f1dc');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -352,7 +367,7 @@ function drawSwipeTrails(now){
  }
 }
 
-function welcomeArt(t){if(selectedGame!=='bubbles'&&W>=850){const x=W*.76,y=H*.39,r=Math.min(W*.07,H*.12);if(isFruit()){fruitArt(x-r*1.1,y-r*.6,r,0);fruitArt(x+r*.85,y+r*.4,r*.9,2);fruitArt(x-r*.8,y+r*1.5,r*.7,1);}else{petArt(x-r*.9,y-r*.4,r,'cat');petArt(x+r*.9,y+r*.6,r,'dog');}return;}
+function welcomeArt(t){if(selectedGame==='puddles'){drawPuddles(ctx,W,H,[{x:.76,foot:.65,width:.15}],t);ctx.font='80px sans-serif';ctx.fillText('🦆',W*.73,H*.6);return;}if(selectedGame!=='bubbles'&&W>=850){const x=W*.76,y=H*.39,r=Math.min(W*.07,H*.12);if(isFruit()){fruitArt(x-r*1.1,y-r*.6,r,0);fruitArt(x+r*.85,y+r*.4,r*.9,2);fruitArt(x-r*.8,y+r*1.5,r*.7,1);}else{petArt(x-r*.9,y-r*.4,r,'cat');petArt(x+r*.9,y+r*.6,r,'dog');}return;}
   const x=W*.75,y=H*.4,s=Math.min(W*.25,H*.38);
   if(W<850)return;
   ctx.save();ctx.translate(x,y);ctx.rotate(-.08);ctx.strokeStyle='#c7b5e244';ctx.lineWidth=1;ctx.setLineDash([4,9]);ctx.beginPath();ctx.ellipse(0,0,s*1.02,s*.8,0,0,Math.PI*2);ctx.stroke();ctx.restore();
@@ -375,10 +390,20 @@ function wearables(p,behind,t){const level=previewRewards?3:rewardLevel(totalPop
 }
 function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phase!=='home')drawTree(t);
   if(phase==='home'){if($('suite-menu').hidden)welcomeArt(t);return;}
+  if(selectedGame==='puddles')drawPuddles(ctx,W,H,mudBodies,t);
   const visiblePlayers=source==='demo'?[]:players;
   visiblePlayers.forEach(p=>wearables(p,true,t));
   if(source!=='demo'&&lastResult&&now-lastResult<600){const r=imageRect();ctx.save();ctx.translate(r.x+r.w,r.y);ctx.scale(-1,1);ctx.globalAlpha=phase==='ended'?.35:1;ctx.drawImage(frameCanvas,0,0,r.w,r.h);ctx.restore();}
   visiblePlayers.forEach(p=>wearables(p,false,t));
+  if(selectedGame==='puddles'){
+    if(source==='demo')for(const [i,b] of mudBodies.entries()){
+      const lift=i===0&&demoLanding>0?Math.sin(demoLanding/.45*Math.PI)*H*.07:0;
+      ctx.save();ctx.translate(b.x*W,b.foot*H-lift);ctx.fillStyle=i?'#efadc0':'#8fbcd6';ctx.strokeStyle='#5e6875';ctx.lineWidth=4;
+      ctx.beginPath();ctx.roundRect(-H*.055,-H*.25,H*.11,H*.2,20);ctx.fill();ctx.stroke();ellipse(0,-H*.3,H*.045,H*.05,'#ffe1bd');
+      for(const side of [-1,1]){ellipse(side*H*.025,-H*.015,H*.025,H*.025,'#f1c655');ellipse(side*H*.015,-H*.31,3,3,'#65564e');}ctx.restore();
+    }
+    drawPuddleEffects(ctx,W,H,puddleParty,mudBodies,reduceMotion);
+  }
   if(selectedGame==='bubbles')drawFairies();
   for(const target of targets){if(target.launchDelay>0)continue;const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit'){ctx.save();ctx.translate(x,y);ctx.rotate(target.remix&&!reduceMotion?target.rotation+target.spin*target.life:0);fruitArt(0,0,r,target.fruit);ctx.restore();}else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));if(target.giant){ctx.save();ctx.strokeStyle='#fff3a6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r*1.22,0,Math.PI*2);ctx.stroke();for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(reduceMotion?0:t*.6);star(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8,5,'#fff3ae');}ctx.restore();}}
   for(const s of slices){if(s.remix){ctx.save();ctx.globalAlpha=Math.min(1,(1.1-s.life)*3);drawJuicyHalf(ctx,s,reduceMotion);ctx.restore();continue;}ctx.save();ctx.globalAlpha=1-s.life/.65;ctx.translate(s.x,s.y);ctx.rotate(s.angle);ctx.beginPath();ctx.rect(-s.r*1.5,s.side<0?-s.r*1.5:s.offset,s.r*3,s.side<0?s.r*1.5+s.offset:s.r*1.5-s.offset);ctx.clip();ctx.rotate(-s.angle);fruitArt(0,0,s.r,s.fruit);ctx.restore();}
@@ -394,7 +419,7 @@ function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phas
     }
   }else hands.forEach((h,i)=>handProp(h,t,i));
   if(previewRewards){ctx.font='600 13px sans-serif';ctx.fillStyle='#644c85';ctx.textAlign='center';ctx.fillText('REWARD PREVIEW · score unchanged',W/2,35);ctx.textAlign='left';}
-  if(source==='demo'){ctx.font='500 12px "DM Sans",sans-serif';ctx.fillStyle='#88749c';ctx.textAlign='center';ctx.fillText(selectedGame==='pets'?'Move pointer or fingers for net · Jump! button / Space drops treasures':'MOUSE / TOUCH · Tap or swipe to play',W/2,H-145);ctx.textAlign='left';}
+  if(source==='demo'){ctx.font='500 12px "DM Sans",sans-serif';ctx.fillStyle='#88749c';ctx.textAlign='center';ctx.fillText(selectedGame==='puddles'?'PRETEND PLAYERS · Tap Jump! or press Space · Camera mode uses your real cutouts':selectedGame==='pets'?'Move pointer or fingers for net · Jump! button / Space drops treasures':'MOUSE / TOUCH · Tap or swipe to play',W/2,H-145);ctx.textAlign='left';}
 }
 function diagnosticData(){return {build:BUILD,source,state:phase,game:selectedGame,difficulty,mode,model:'MediaPipe Pose Landmarker Lite / tasks-vision 0.10.21',delegate,players:source==='demo'?'simulated':players.length,hands:hands.length,cutout:sessionConfig.cutout,processing:sessionConfig.quality,inferenceMs:Math.round(inferMs),trackingFPS:trackFPS,renderFPS,frameAgeMs:lastResult?Math.round(performance.now()-lastResult):null,cameraSize:source==='camera'?`${video.videoWidth}×${video.videoHeight}`:null,browser:navigator.userAgent,secureContext:window.isSecureContext,lastError,privacy:'No camera frames recorded or uploaded. No video filename included.'};}
 function updateDiagnostics(){$('diagnostics').textContent=JSON.stringify(diagnosticData(),null,2);}

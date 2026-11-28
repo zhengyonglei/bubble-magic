@@ -4,6 +4,7 @@ export const LEVELS={
  hard:{label:'Hard',interval:.43,max:12,speed:.055,drift:.055,radius:.037,hazardEvery:4}
 };
 export const GAMES={
+ puddles:{title:'Muddy Puddle Party',description:'Little jumps, big splashes! Land in your puddle to send silly mud onto your friends. No obstacles, just giggles.',verb:'made',noun:'splashes'},
  remix:{title:'Fruit Slice Remix · Preview',description:'Sweep through juicy waves! Slice three fruit in one motion for a combo. No obstacles.',verb:'sliced',noun:'fruit'},
  bubbles:{title:'Bubble Magic',icon:'🫧',description:'Follow the fairies and pop their magic bubbles! Giant bubbles burst into six little ones.',verb:'popped',noun:'bubbles'},
  fruit:{title:'Fruit Slice',icon:'🍉',description:'Swipe through fruit tossed into the air. Leave a glowing trail!',verb:'sliced',noun:'fruit'},
