@@ -1,15 +1,15 @@
-import {FairyGarden,moveFairyBubble,splitGiant} from './bubble-fairies.js?v=0.15.1';
-import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.15.1';
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.15.1';
+import {FairyGarden,moveFairyBubble,splitGiant} from './bubble-fairies.js?v=0.15.2';
+import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.15.2';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.15.2';
 import {GardenMusic} from './music.js?v=0.12.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.15.1';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.15.2';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.15.1';
+const BUILD='0.15.2';
 const autoPlayers=(id=selectedGame)=>id==='remix'||id==='bubbles';
 const isFruit=()=>selectedGame==='fruit'||selectedGame==='remix';
 let fairyGarden=new FairyGarden();
@@ -267,8 +267,8 @@ function step(dt,now){
       for(const item of treeItems)item.shown+=(item.growth-item.shown)*Math.min(1,dt*4);
       shakePending=false;
     }
-    for(const t of targets){t.prev={x:t.x,y:t.y};if(t.fairyBubble)moveFairyBubble(t,dt,H/W);else moveTarget(t,dt,selectedGame,difficulty);}
-    const hit=targets.filter(t=>{if(t.fairyBubble&&t.life<t.popDelay)return false;if(selectedGame==='pets'){const net=treeNets.find(n=>netContact(t,n,W,H,now));if(!net)return false;caughtPets.push({type:t.type,fruit:t.fruit,r:t.r,x:t.x,y:t.y,net,life:0});return true;}return controls.some(h=>{
+    for(const t of targets){let motionDt=dt;if(t.launchDelay>0){t.launchDelay-=dt;if(t.launchDelay>0)continue;motionDt=-t.launchDelay;t.launchDelay=0;}t.prev={x:t.x,y:t.y};if(t.fairyBubble)moveFairyBubble(t,dt,H/W);else moveTarget(t,motionDt,selectedGame,difficulty);}
+    const hit=targets.filter(t=>{if(t.launchDelay>0)return false;if(t.fairyBubble&&t.life<t.popDelay)return false;if(selectedGame==='pets'){const net=treeNets.find(n=>netContact(t,n,W,H,now));if(!net)return false;caughtPets.push({type:t.type,fruit:t.fruit,r:t.r,x:t.x,y:t.y,net,life:0});return true;}return controls.some(h=>{
       if(t.tossed&&(t.life<.25||t.x*W<t.r*H||t.x*W>W-t.r*H))return false;
       if(isFruit()&&t.type!=='cactus'&&!canSlice(h,now))return false;
       if(selectedGame==='remix'&&Math.hypot(h.x-h.prev.x,h.y-h.prev.y)<(h.direct?.004:.008))return false;
@@ -380,7 +380,7 @@ function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phas
   if(source!=='demo'&&lastResult&&now-lastResult<600){const r=imageRect();ctx.save();ctx.translate(r.x+r.w,r.y);ctx.scale(-1,1);ctx.globalAlpha=phase==='ended'?.35:1;ctx.drawImage(frameCanvas,0,0,r.w,r.h);ctx.restore();}
   visiblePlayers.forEach(p=>wearables(p,false,t));
   if(selectedGame==='bubbles')drawFairies();
-  for(const target of targets){const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit'){ctx.save();ctx.translate(x,y);ctx.rotate(target.remix&&!reduceMotion?target.rotation+target.spin*target.life:0);fruitArt(0,0,r,target.fruit);ctx.restore();}else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));if(target.giant){ctx.save();ctx.strokeStyle='#fff3a6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r*1.22,0,Math.PI*2);ctx.stroke();for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(reduceMotion?0:t*.6);star(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8,5,'#fff3ae');}ctx.restore();}}
+  for(const target of targets){if(target.launchDelay>0)continue;const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit'){ctx.save();ctx.translate(x,y);ctx.rotate(target.remix&&!reduceMotion?target.rotation+target.spin*target.life:0);fruitArt(0,0,r,target.fruit);ctx.restore();}else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));if(target.giant){ctx.save();ctx.strokeStyle='#fff3a6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r*1.22,0,Math.PI*2);ctx.stroke();for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(reduceMotion?0:t*.6);star(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8,5,'#fff3ae');}ctx.restore();}}
   for(const s of slices){if(s.remix){ctx.save();ctx.globalAlpha=Math.min(1,(1.1-s.life)*3);drawJuicyHalf(ctx,s,reduceMotion);ctx.restore();continue;}ctx.save();ctx.globalAlpha=1-s.life/.65;ctx.translate(s.x,s.y);ctx.rotate(s.angle);ctx.beginPath();ctx.rect(-s.r*1.5,s.side<0?-s.r*1.5:s.offset,s.r*3,s.side<0?s.r*1.5+s.offset:s.r*1.5-s.offset);ctx.clip();ctx.rotate(-s.angle);fruitArt(0,0,s.r,s.fruit);ctx.restore();}
   for(const pop of popRings){ctx.save();ctx.globalAlpha=1-pop.life/.65;const radius=pop.r*(1+pop.life*(reduceMotion?.35:1.8));ctx.lineWidth=3*(1-pop.life/.65)+1;ctx.strokeStyle='#fff9e9';ctx.beginPath();ctx.arc(pop.x,pop.y,radius,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=pop.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(pop.x,pop.y,radius*1.16,0,Math.PI*2);ctx.stroke();for(let i=0;i<8;i++){const a=i*Math.PI/4;star(pop.x+Math.cos(a)*radius,pop.y+Math.sin(a)*radius,5*(1-pop.life/.65),'#fff3ab',a+pop.life);}ctx.restore();}
   for(const [i,p] of particles.entries()){ctx.globalAlpha=1-p.life/p.ttl;if(i%4===0&&artReady('atlas'))sprite('sparkles',p.x,p.y,p.r*5);else ellipse(p.x,p.y,p.r,p.r,p.color);}ctx.globalAlpha=1;

@@ -1,23 +1,33 @@
 import {fruitSize} from './game-modes.js?v=0.13.0';
 export class FruitRemix {
- constructor(){this.clock=0;this.nextWave=.4;this.wave=0;this.swipes=new Map();this.banner='Ready, set, slice!';this.bannerUntil=2;}
+ constructor(){this.clock=0;this.nextWave=.4;this.wave=0;this.lastZone=-1;this.lastSide=null;this.swipes=new Map();this.banner='Ready, set, slice!';this.bannerUntil=2;}
  update(dt,elapsed,aspect,aimY=.42,random=Math.random,playerCount=1,duration=60){
   this.clock+=dt;if(this.clock<this.nextWave)return [];
   const people=Math.max(1,Math.min(4,Math.floor(playerCount)||1));
   const stage=duration>60?elapsed%50:elapsed,finale=elapsed>=duration-10,base=finale?8:stage<15?4:stage<35?5:6,count=base+2*(people-1);
-  this.nextWave=this.clock+(finale?2.2:2.8+random()*.4);this.wave++;
-  this.banner=finale?'FRUIT SHOWER!':stage<15?'Sweep through a whole wave!':stage<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
-  const both=people>1||random()<.4,wide=random()<.5;
-  const entryY=.48+random()*.28,centerX=.26+random()*.48,centerY=Math.max(.26,Math.min(.53,aimY+(random()-.5)*.22)),flight=1.25+random()*.45;
-  return Array.from({length:count},(_,i)=>{
-   const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=both?(this.wave+i)%2:this.wave%2;
-   const x=left?-(r*aspect*1.3+.02):1+r*aspect*1.3+.02;
-   const y=Math.max(.46,Math.min(.82,entryY+(random()-.5)*(wide?.25:.08)));
-   const apexY=Math.max(.24,Math.min(.56,y-.12,centerY+(random()-.5)*(wide?.20:.06)));
-   const aimX=Math.max(.23,Math.min(.77,centerX+(random()-.5)*(wide?.48:.15)));
-   const apexTime=flight+(random()-.5)*.18,gravity=2*(y-apexY)/(apexTime*apexTime);
-   return {x,y,vx:(aimX-x)/apexTime,vy:-gravity*apexTime,gravity,tossed:true,ttl:10,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true};
-  });
+  this.wave++;
+  this.banner=finale?'FRUIT SHOWER!':stage<15?'Little bunches, big swipes!':stage<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
+  const result=[];let delay=0;
+  while(result.length<count){
+   const remaining=count-result.length,size=remaining<=3?remaining:remaining===4?2:random()<.55?2:3;
+   const zone=this.lastZone<0?Math.floor(random()*3):(this.lastZone+1+Math.floor(random()*2))%3;
+   this.lastZone=zone;
+   const left=this.lastSide===null?random()<.5:random()<.6?!this.lastSide:this.lastSide;this.lastSide=left;
+   const profile=Math.floor(random()*3),entryY=[.40,.61,.78][profile]+(random()-.5)*.08;
+   const centerX=[.27,.50,.73][zone],centerY=Math.max(.24,Math.min(.50,aimY+(random()-.5)*.20));
+   const flight=1.25+random()*.45;
+   for(let j=0;j<size;j++){
+    const i=result.length,fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),x=left?-(r*aspect*1.3+.02):1+r*aspect*1.3+.02;
+    const y=entryY+(j-(size-1)/2)*.025;
+    const apexY=Math.max(.24,Math.min(y-.06,centerY+(j-(size-1)/2)*.035));
+    const aimX=Math.max(.23,Math.min(.77,centerX+(j-(size-1)/2)*.045));
+    const apexTime=flight+(j-(size-1)/2)*.04,gravity=2*(y-apexY)/(apexTime*apexTime);
+    result.push({x,y,vx:(aimX-x)/apexTime,vy:-gravity*apexTime,gravity,tossed:true,ttl:10,fruit,r,type:'fruit',life:0,seed:random()*6,spin:(random()-.5)*3,rotation:random()*6,color:['#ff686b','#ffb340','#ef557a'][fruit],remix:true,launchDelay:delay,cluster:this.wave+':'+delay});
+   }
+   delay+=(finale?.6:people>2?.7:.85)+random()*.2;
+  }
+  this.nextWave=this.clock+delay+.25;
+  return result;
  }
  hit(handId,target,now){
   const angle=target.cut?.angle??0,old=this.swipes.get(handId);
