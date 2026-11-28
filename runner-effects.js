@@ -5,8 +5,8 @@ export class RunnerEffects {
  burst(x,y,colors,count=26){for(let i=0;i<(this.reduced?6:count);i++){const a=i/count*Math.PI*2,s=.07+(i%5)*.025;this.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1.2,age:0,color:colors[i%colors.length],size:3+i%3});}this.particles=this.particles.slice(-320);}
  emit(e){const x=.52+e.lane*.13,y=.66;
  if(e.type==='star'){this.gold=.7;this.burst(x,y,['#fff6b7','#ffcf48','#ffed86']);this.flights.push({x,y,age:0});this.labels.push({x,y,age:0,text:'+1 STAR',color:'#fff3a4'});}
- if(e.type==='hit'){this.hit=.7;this.burst(x,y,['#ffbb83','#ffddc4','#fff2ce'],18);this.labels.push({x:.5,y:.43,age:0,text:e.kind==='log'?'BONK! Jump over logs':'BONK! Duck under arches',color:'#ffe2c2'});}
- if(e.type==='clear')this.labels.push({x,y:.48,age:0,text:e.kind==='log'?'SUPER JUMP!':'GREAT DUCK!',color:'#b8ffd8'});
+ if(e.type==='hit'){this.hit=.7;this.burst(x,y,['#ffbb83','#ffddc4','#fff2ce'],18);this.labels.push({x:.5,y:.43,age:0,text:'BONK! Jump over logs',color:'#ffe2c2'});}
+ if(e.type==='clear')this.labels.push({x,y:.48,age:0,text:'SUPER JUMP!',color:'#b8ffd8'});
  if(e.type==='finish'){this.celebration=8;this.burstIn=0;}
  this.labels=this.labels.slice(-6);this.flights=this.flights.slice(-12);
  }

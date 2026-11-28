@@ -92,3 +92,7 @@ Laptop acceptance checklist:
 3. A newcomer at the edge must not control the game. Bring them near/crossing the player: simulation and collisions must freeze. Have the player leave, partly hide, or be occluded. No bystander takeover; clear the scene and deliberately select again. Detector misses/merged poses remain a known limitation.
 4. Hide tab, return, resume and reselect. Check stop-camera and navigation release webcam indicator. Test camera denial/model failure and switching to keyboard.
 5. On 2018 Intel Mac/HDMI TV, assess frame rate, thermal load, input latency, actual camera processing rate, and a complete session before tuning thresholds or claiming support.
+
+## Jungle Trail build 08 validation — 2026-11-28
+
+Synthetic regressions cover sustained mild posture/colour changes, brief missing appearance with a strict time limit, quick recovery from a pose gap, multi-frame crossing recovery, long-gap similar outfits, bounded reference learning, strong mismatch rejection, soft histogram boundaries, numeric diagnostics and clipboard fallback. Course/interface tests verify no duck action or low obstacles; existing jump, scoring, lifecycle and suite regressions remain. These do not establish real webcam accuracy, M1/M2 performance or child ergonomics. Next laptop test: select player, lower arms, stand/lean/jump naturally, introduce a distant newcomer then a crossing person, and copy diagnostics after pauses.

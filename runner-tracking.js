@@ -1,8 +1,19 @@
 // Session-only appearance cues. No images or descriptors are saved or uploaded.
 const visible=(p,i,min=.5)=>p?.[i]&&p[i].visibility>=min;
+// Bounded numeric diagnostics only; no images, landmarks or appearance descriptors.
+export class TrackingDiagnostics {
+ reset(){this.frames=[];this.lastFrame=null;this.delegate='unknown';this.pauses={};this.current='loading';this.since=0;this.pauseMs=0;this.frameCount=0;}
+ constructor(){this.reset();}
+ sample(now,ms,age){this.frameCount++;this.frames.push({ms:Number.isFinite(ms)?ms:0,age:Math.max(0,age),interval:this.lastFrame===null?0:now-this.lastFrame});this.lastFrame=now;if(this.frames.length>60)this.frames.shift();}
+ state(code,now){if(code===this.current)return;if(this.current!=='locked'&&this.current!=='loading'&&this.current!=='manual'&&this.current!=='select')this.pauseMs+=Math.max(0,now-this.since);if(!['locked','loading','manual','select'].includes(code))this.pauses[code]=(this.pauses[code]||0)+1;this.current=code;this.since=now;}
+ summary(){const n=this.frames.length;if(!n)return 'Waiting for camera frames.';const ms=this.frames.reduce((v,f)=>v+f.ms,0)/n,intervals=this.frames.filter(f=>f.interval>0&&f.interval<2000),rate=intervals.length?1000/(intervals.reduce((v,f)=>v+f.interval,0)/intervals.length):0;return `${rate.toFixed(1)} tracking frames/s · ${Math.round(ms)} ms processing · ${this.current}`;}
+ report(){return JSON.stringify({build:'runner-08',delegate:this.delegate,frames:this.frameCount,recent:this.summary(),maxRecentFrameAgeMs:Math.round(Math.max(0,...this.frames.map(f=>f.age))),pauseTransitionsByCause:this.pauses,completedTrackingPauseMs:Math.round(this.pauseMs),currentState:this.current},null,2);}
+}
 function histogram(image,points){
  const bins=new Array(66).fill(0);let count=0;
- for(const [nx,ny] of points){const x=Math.round(nx*image.width),y=Math.round(ny*image.height);if(x<0||y<0||x>=image.width||y>=image.height)continue;const k=(y*image.width+x)*4;const r=image.data[k],g=image.data[k+1],b=image.data[k+2],sum=r+g+b;if(sum<60){bins[64]++;count++;continue;}if(sum>720){bins[65]++;count++;continue;}const a=Math.min(3,Math.floor(8*r/sum)),c=Math.min(3,Math.floor(8*g/sum)),d=Math.min(3,Math.floor(8*b/sum));bins[a*16+c*4+d]++;count++;}
+ for(const [nx,ny] of points){const x=Math.round(nx*image.width),y=Math.round(ny*image.height);if(x<0||y<0||x>=image.width||y>=image.height)continue;const k=(y*image.width+x)*4;const r=image.data[k],g=image.data[k+1],b=image.data[k+2],sum=r+g+b;if(sum<60){bins[64]++;count++;continue;}if(sum>720){bins[65]++;count++;continue;}// Soft colour bins avoid abrupt identity changes at quantization boundaries.
+ const channels=[r,g,b].map(v=>3*v/sum),lo=channels.map(Math.floor),fraction=channels.map((v,i)=>v-lo[i]);
+ for(let mask=0;mask<8;mask++){let weight=1;const cell=lo.map((v,i)=>{const high=(mask>>i)&1;weight*=high?fraction[i]:1-fraction[i];return Math.min(3,v+high);});bins[cell[0]*16+cell[1]*4+cell[2]]+=weight;}count++;}
  return count>=20?bins.map(v=>v/count):null;
 }
 function patch(image,p,top,bottom){
@@ -23,7 +34,7 @@ export function appearanceScore(a,b){
  if(!a?.shirt||!b?.shirt)return null;
  const shirt=distance(a.shirt,b.shirt);if(shirt>.42)return null;
  let sum=shirt*.7,weight=.7;
- if(a.trousers&&b.trousers){const d=distance(a.trousers,b.trousers);if(d>.55)return null;sum+=d*.25;weight+=.25;}
+ if(a.trousers&&b.trousers){const d=distance(a.trousers,b.trousers);sum+=d*.25;weight+=.25;}
  if(a.face&&b.face){sum+=distance(a.face,b.face)*.05;weight+=.05;}
  return sum/weight;
 }
