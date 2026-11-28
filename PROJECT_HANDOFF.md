@@ -81,3 +81,5 @@ Suite 0.12.2: corrected oversized tree composition: art is 165% stage height and
 - v0.13.3: Bubble Magic now shares automatic joining (up to 4) with Remix; no player-count picker or settings override. Existing bubble pacing and props preserved; original Fruit Slice and Cats & Dogs retain their selection.
 
 - v0.14.0: Bubble Magic uses AI-generated fairy atlas (assets/fairies-ai-v2.png), groups from randomized outside edges, mirrored sprites/wand origins, and growing wand bubbles. Giant bubbles release six non-recursive little bubbles with 450ms protection. FairyGarden owns spawning; capped live fairies and bubble emissions; pause/replay tested.
+
+- v0.14.1: Fairy routes use cubic curves (S-shaped cross-screen sweeps and top/side swoops). No bottom entrances or exits; sprite mirroring follows horizontal tangent.
