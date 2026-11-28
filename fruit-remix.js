@@ -1,12 +1,12 @@
 import {fruitLaunch,fruitSize} from './game-modes.js?v=0.13.0';
 export class FruitRemix {
  constructor(){this.clock=0;this.nextWave=.4;this.wave=0;this.swipes=new Map();this.banner='Ready, set, slice!';this.bannerUntil=2;}
- update(dt,elapsed,aspect,aimY=.42,random=Math.random,playerCount=1){
+ update(dt,elapsed,aspect,aimY=.42,random=Math.random,playerCount=1,duration=60){
   this.clock+=dt;if(this.clock<this.nextWave)return [];
   const people=Math.max(1,Math.min(4,Math.floor(playerCount)||1));
-  const finale=elapsed>=50,base=finale?7:elapsed<15?3:elapsed<35?4:5,count=base+2*(people-1);
+  const stage=duration>60?elapsed%50:elapsed,finale=elapsed>=duration-10,base=finale?7:stage<15?3:stage<35?4:5,count=base+2*(people-1);
   this.nextWave=this.clock+(finale?2.3:3.6);this.wave++;
-  this.banner=finale?'FRUIT SHOWER!':elapsed<15?'Sweep through a whole wave!':elapsed<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
+  this.banner=finale?'FRUIT SHOWER!':stage<15?'Sweep through a whole wave!':stage<35?'Find your rhythm!':'Juicy combos!';this.bannerUntil=this.clock+1.4;
   return Array.from({length:count},(_,i)=>{
    const group=people>1?Math.floor(i/Math.ceil(count/2)):0,local=people>1?i%Math.ceil(count/2):i;
    const fruit=(this.wave+i)%3,r=.046*fruitSize(fruit),left=(this.wave+group)%2;

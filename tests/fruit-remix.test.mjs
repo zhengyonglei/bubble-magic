@@ -28,3 +28,6 @@ test('Remix scales next wave with joined player count and scales back after depa
  const r=new FruitRemix();for(const [people,count] of [[1,3],[2,5],[3,7],[4,9],[2,5],[1,3]]){const wave=r.update(4,0,.56,.42,()=>.5,people);assert.equal(wave.length,count);if(people>1){assert.ok(wave.some(t=>t.x<0));assert.ok(wave.some(t=>t.x>1));}}
  assert.equal(r.update(4,51,.56,.42,()=>.5,4).length,13);assert.equal(r.update(4,51,.56,.42,()=>.5,99).length,13);
 });
+test('long Remix rounds alternate gentle and busy waves, saving finale for their final ten seconds',()=>{
+ for(const duration of [120,180,300]){const r=new FruitRemix();const wave=t=>r.update(4,t,.56,.42,()=>.5,1,duration).length;assert.equal(wave(0),3);assert.equal(wave(40),5);assert.equal(wave(50),3);assert.equal(wave(90),5);assert.notEqual(wave(duration-11),7);assert.equal(wave(duration-10),7);assert.equal(r.banner,'FRUIT SHOWER!');}
+});

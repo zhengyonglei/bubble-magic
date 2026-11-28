@@ -6,7 +6,7 @@
   <meta name="description" content="Move, pop, and make a little magic. A cooperative camera-powered bubble game, processed privately in your browser.">
   <title>Play Garden · Move. Play. Smile.</title>
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=0.14.1">
+  <link rel="stylesheet" href="./style.css?v=0.15.0">
 </head>
 <body>
   <header class="topbar">
@@ -40,7 +40,7 @@
       <button class="text-btn" id="choose-game">All games</button>
       <h1 id="welcome-title">You bring<br>the <em>magic.</em></h1>
       <p id="game-description">Reach for bubbles. Make them pop.</p>
-      <div id="player-picker" class="player-picker" role="group" aria-label="Number of players"><button data-players="1" aria-pressed="true">Solo</button><button data-players="2" aria-pressed="false">Together · 2 players</button></div><p id="auto-players" hidden>Up to 4 players · Step into view to join.<br>Cyan circles · Coral diamonds · Gold stars · Violet crosses</p><p class="cooperation-note">One shared score. Everyone earns rewards together.</p>
+      <div id="player-picker" class="player-picker" role="group" aria-label="Number of players"><button data-players="1" aria-pressed="true">Solo</button><button data-players="2" aria-pressed="false">Together · 2 players</button></div><p id="auto-players" hidden>Up to 4 players · Step into view to join.<br>Cyan circles · Coral diamonds · Gold stars · Violet crosses</p><label class="duration-picker" for="duration">Round length<select id="duration"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></label><p class="cooperation-note">One shared score. Everyone earns rewards together.</p>
       <div class="mode-picker" role="group" aria-label="Choose game difficulty">
         <button class="mode active" data-mode="easy" aria-pressed="true"><b>Easy</b><small>Few &amp; slow<br>No obstacles</small></button>
         <button class="mode" data-mode="medium" aria-pressed="false"><b>Medium</b><small>More &amp; faster<br>A few cacti</small></button>
@@ -49,7 +49,7 @@
       <p id="level-note" class="level-note"></p><button id="camera" class="primary">✦ &nbsp; Play with camera</button>
       <div class="alt-actions"><button id="demo">Play with mouse or touch</button><span>·</span><button id="video-button">Use a video</button></div>
       <p class="privacy"><span aria-hidden="true">♧</span> Camera stays on your device. No recording.</p>
-      <div id="welcome-tip" class="welcome-tip">1–2 players · 60-second rounds · No downloads to install</div>
+      <div id="welcome-tip" class="welcome-tip">1–2 players · 1–5 minute rounds · No downloads to install</div>
     </section>
     <div id="status" class="status" role="status" aria-live="polite" hidden></div>
     <div id="toast" class="toast" role="status" hidden></div>
@@ -74,6 +74,7 @@
     <form method="dialog"><button class="close" aria-label="Close settings">×</button></form>
     <span class="eyebrow">MAKE YOURSELF COMFORTABLE</span><h2>Play your way.</h2>
     <label id="player-setting">Players<select id="players"><option value="2">Up to two, together</option><option value="1">One player</option></select></label>
+    <label>Round length <small>(applies next round)</small><select id="duration-setting"><option value="60">1 minute</option><option value="120">2 minutes</option><option value="180">3 minutes</option><option value="300">5 minutes</option></select></label>
     <label>Camera processing<select id="quality"><option value="balanced">Balanced · 640 × 480</option><option value="light">Lighter · 480 × 360</option></select></label>
     <label class="switch-row"><span>Magic cutout<small>Hide the room behind you</small></span><input id="cutout" type="checkbox" checked></label>
     <label id="hazard-setting" class="switch-row"><span>Prickly cacti<small>Medium / Hard only: lose up to 20 points and reset your combo. Easy never has obstacles.</small></span><input id="hazards" type="checkbox"></label>
@@ -81,11 +82,11 @@
     <p class="settings-note">Player, processing, and cutout changes apply next time you open a camera or video. Keep only the players in the camera view.</p>
     <label class="switch-row"><span>Preview all rewards<small>Try on the crown, wings and bracelets without changing your score. Start a camera or mouse session to see them.</small></span><input id="preview-rewards" type="checkbox"></label><button class="secondary" id="reset-rewards">Reset dress-up rewards</button>
     <details><summary>Testing &amp; diagnostics</summary><p>Video files are read locally, never uploaded. Mouse demo tests gameplay, not camera accuracy.</p><button id="vision-check" class="secondary">Run sample-image vision check</button><p class="fine-print">Downloads Google's public pose photo to test the real tracking model. This is not a live performance test.</p><pre id="diagnostics">No tracking session yet.</pre><button id="copy-diagnostics" class="secondary">Copy diagnostics</button><textarea id="diagnostics-copy" readonly hidden aria-label="Diagnostics text for copying"></textarea></details>
-    <p class="version">Prototype 0.14.1 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
+    <p class="version">Prototype 0.15.0 · <a href="https://github.com/zhengyonglei/bubble-magic" target="_blank" rel="noopener">Source &amp; design</a></p>
   </dialog>
   <input type="file" id="video-file" accept="video/*" hidden>
   <video id="input-video" playsinline muted hidden></video>
   <noscript>This game needs JavaScript enabled in your browser.</noscript>
-  <script type="module" src="./app.js?v=0.14.1"></script>
+  <script type="module" src="./app.js?v=0.15.0"></script>
 </body>
 </html>

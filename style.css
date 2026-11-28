@@ -33,3 +33,5 @@ html:fullscreen,html.expanded-play{overflow:hidden}
 :fullscreen #stage,.expanded-play #stage,:fullscreen #stage.in-session,.expanded-play #stage.in-session{height:calc(100svh - 64px);min-height:0}
 #fullscreen span,#sound span{display:inline;font-size:12px}
 @media(max-width:600px){.top-note{display:none}.topbar{padding:0 8px;gap:6px}#fullscreen span,#sound span{font-size:10px}.icon-btn{padding:6px}.brand{max-width:100px}}
+
+.duration-picker{display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;margin:12px 0}.duration-picker select{width:auto;margin:0;padding:8px 12px}
