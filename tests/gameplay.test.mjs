@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as core from '../game-core.js';
 import * as modes from '../game-modes.js';
+import * as fairyModule from '../bubble-fairies.js';
 import * as remixModule from '../fruit-remix.js';
 import * as tree from '../tree-game.js';
 import {GardenMusic} from '../music.js';
@@ -13,7 +14,7 @@ function game(){
  const element=()=>({textContent:'',hidden:false,open:false,checked:false,dataset:{},classList:{toggle(){},add(){},remove(){}},setAttribute(){},removeAttribute(){},focus(){},pause(){},load(){},getContext:()=>ctx,getBoundingClientRect:()=>({left:0,top:0,width:1000,height:600}),querySelector:()=>element()});
  const node=id=>{if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);};
  const rewards=[5,15,30].map(n=>{const e=element();e.dataset.reward=n;const progress=element(),small=element();e.querySelector=q=>q==='progress'?progress:small;return e;});
- const events={};const sandbox={...remixModule,...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
+ const events={};const sandbox={...fairyModule,...remixModule,...tree,GardenMusic,...core,...modes,URL,Image:class{},ResizeObserver:class{observe(){}},performance:{now:()=>0},devicePixelRatio:1,matchMedia:()=>({matches:false}),requestAnimationFrame(){},setTimeout(){},clearTimeout(){},window:{addEventListener(){}},document:{documentElement:element(),hidden:false,getElementById:node,createElement:element,querySelector:node,querySelectorAll:q=>q==='[data-reward]'?rewards:[],addEventListener(type,fn){events[type]=fn;}}};
  vm.createContext(sandbox);
  const source=readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replaceAll('import.meta.url',JSON.stringify(new URL('../app.js',import.meta.url).href));
  vm.runInContext(source,sandbox);
@@ -33,7 +34,7 @@ test('solo medium and hard spawn cacti; easy never does',()=>{for(const difficul
 test('caught animals remain full-size for visible entry and pause with the game',()=>{const g=game();g.run("selectedGame='pets';baseSession('demo');startRound();spawnClock=0;pointer={x:.5,y:.5,active:true};targets=[{id:99,x:.5,y:.4495,r:.05,type:'cat',life:0,ttl:10,vx:0,vy:0,seed:0}];step(.05,2000);for(let i=0;i<10;i++)step(.1,2100+i*100);");assert.equal(g.run('caughtPets.length'),1);assert.equal(g.run('caughtPets[0].r'),.05);const age=g.run('caughtPets[0].life');g.run('manualPause=true;step(.5,4000)');assert.equal(g.run('caughtPets[0].life'),age);g.run('manualPause=false;for(let i=0;i<20;i++)step(.1,4100+i*100)');assert.equal(g.run('caughtPets.length'),0);assert.equal(g.run('round.score'),10);});
 
 
-test('bubble party removes difficulty, fills the scene, and blows bubbles in from outside',()=>{const g=game();g.run("chooseGame('bubbles');baseSession('demo');startRound();spawnClock=0;spawn(2000);");assert.equal(g.nodes.get('.mode-picker').hidden,true);assert.ok(g.run('targets[0].x>1'));g.run('spawn(2000)');assert.ok(g.run('targets[1].x<0'));g.run('for(let i=0;i<65;i++)step(.1,2100+i*100)');assert.ok(g.run('targets.length')>=15);assert.equal(g.run("targets.some(t=>t.type==='cactus')"),false);assert.ok(g.run('targets[0].x')<1);});
+test('bubble party produces wand bubbles with decorative fairies and no hazards',()=>{const g=game();g.run("chooseGame('bubbles');baseSession('demo');startRound();fairyGarden=new FairyGarden(()=>.1);for(let i=0;i<100;i++)step(.1,i*100);");assert.equal(g.nodes.get('.mode-picker').hidden,true);assert.ok(g.run('fairyGarden.fairies.length')>=2);assert.ok(g.run('targets.length')>3);assert.equal(g.run('targets.every(t=>t.fairyBubble)'),true);assert.equal(g.run("targets.some(t=>t.type==='cactus')"),false);});
 test('two quick finger taps score once each even when released before the next frame',()=>{const g=game();g.run("baseSession('demo');startRound();spawnClock=0;targets=[.3,.7].map((x,i)=>({id:100+i,x,y:.5,r:.04,type:'bubble',life:0,ttl:10,vx:0,vy:0,seed:0}));for(const [id,x] of [[1,300],[2,700]]){canvas.onpointerdown({pointerId:id,pointerType:'touch',clientX:x,clientY:300,preventDefault(){}});canvas.onpointerup({pointerId:id,preventDefault(){}});}step(.01,2000);");assert.equal(g.run('round.score'),20);assert.equal(g.run('fingers.size'),0);assert.equal(g.run('popRings.length'),2);g.run('step(.01,2010)');assert.equal(g.run('round.score'),20);});
 test('cancelled fingers do not leave active touch controls',()=>{const g=game();g.run("baseSession('demo');canvas.onpointerdown({pointerId:1,pointerType:'touch',clientX:300,clientY:300,preventDefault(){}});canvas.onpointercancel({pointerId:1});");assert.equal(g.run('fingers.size'),0);});
 
@@ -159,4 +160,10 @@ test('Bubble Magic automatically joins four players and restores manual selectio
  assert.equal(g.run('sessionConfig.players'),4);assert.equal(g.run('players.length'),4);assert.equal(g.run('hands.length'),8);assert.equal(g.nodes.get('player-picker').hidden,true);assert.equal(g.nodes.get('player-setting').hidden,true);
  g.run('updatePlayers([],1100)');assert.equal(g.run('hands.length'),0);g.run('updatePlayers(group.slice(0,2),1200)');assert.equal(g.run('hands.length'),4);
  g.run("chooseGame('fruit');baseSession('camera')");assert.equal(g.run('sessionConfig.players'),1);assert.equal(g.nodes.get('player-picker').hidden,false);
+});
+test('giant bubble scores once and releases six separately poppable children; pause and replay reset fairies',()=>{
+ const g=game();g.run("chooseGame('bubbles');baseSession('demo');startRound();fairyGarden.nextGroup=100;pointer={x:.5,y:.5,active:true};targets=[{id:99,type:'bubble',fairyBubble:true,giant:true,x:.5,y:.5,r:.1,fullR:.1,life:1,ttl:12,vx:0,vy:0,seed:0,color:'#ffeeaa',popDelay:.3}];step(.01,100);");
+ assert.equal(g.run('round.score'),10);assert.equal(g.run('targets.length'),6);assert.equal(g.run('new Set(targets.map(t=>t.id)).size'),6);g.run('step(.01,110)');assert.equal(g.run('round.score'),10);
+ g.run('pointer.active=false;for(let i=0;i<6;i++)step(.1,200+i*100);pointer={x:targets[0].x,y:targets[0].y,active:true};mousePrev=null;step(.01,900);');assert.ok(g.run('round.score')>10);assert.equal(g.run('targets.some(t=>t.giant)'),false);
+ const clock=g.run('fairyGarden.clock');g.run('manualPause=true;step(.1,1000)');assert.equal(g.run('fairyGarden.clock'),clock);g.run('startRound()');assert.equal(g.run('fairyGarden.fairies.length'),0);assert.equal(g.run('targets.length'),0);
 });

@@ -1,18 +1,20 @@
-import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.13.3';
-import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.13.3';
+import {FairyGarden,moveFairyBubble,splitGiant} from './bubble-fairies.js?v=0.14.0';
+import {FruitRemix,drawJuicyHalf,remixSliceSound,RemixRoster,REMIX_TRAILS} from './fruit-remix.js?v=0.14.0';
+import {playerNets,JumpTracker,netPoints,netContact,treeDrop,advanceTree} from './tree-game.js?v=0.14.0';
 import {GardenMusic} from './music.js?v=0.12.0';
-import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.13.3';
+import {LEVELS,GAMES,isHazard,moveTarget,canSlice,bubbleSize,swipeCut,fruitSize,basketContact,basketGeometry,playerBaskets,crownGeometry,fruitLaunch} from './game-modes.js?v=0.14.0';
 import {Round,REWARDS,clamp,handHits,rewardLevel,matchPoses} from './game-core.js?v=0.12.0';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),video=$('input-video');
 const frameCanvas=document.createElement('canvas'),frameCtx=frameCanvas.getContext('2d');
 const maskCanvas=document.createElement('canvas'),maskCtx=maskCanvas.getContext('2d');
 const capture=document.createElement('canvas'),captureCtx=capture.getContext('2d');
-const BUILD='0.13.3';
+const BUILD='0.14.0';
 const autoPlayers=(id=selectedGame)=>id==='remix'||id==='bubbles';
 const isFruit=()=>selectedGame==='fruit'||selectedGame==='remix';
+let fairyGarden=new FairyGarden();
 let remix=new FruitRemix(),remixRoster=new RemixRoster();
-const art={};for(const [name,file] of Object.entries({treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
+const art={};for(const [name,file] of Object.entries({fairies:'fairies-ai-v2.png',treasures:'tree-treasures-ai-v1.png',tree:'tree-ai-v1.png',cat:'cat-full-body-ai-v1.png',dog:'dog-full-body-ai-v1.png',props:'hand-props-ai-v1.png',atlas:'game-atlas-ai-v1.png',garden:'garden-ai-v1.jpg',cactus:'cactus-ai-v1.png',butterfly:'butterfly-ai-v1.png'})){const img=new Image();img.src=new URL('./assets/'+file,import.meta.url).href;art[name]=img;}
 const SPRITES={bubble:0,star:1,apple:2,orange:3,melon:4,cat:5,dog:6,butterfly:7,cactus:8,crown:9,wings:10,bracelet:11,mascot:12,adult:13,child:14,sparkles:15};
 function sprite(name,x,y,w,h=w,alpha=1){if(!artReady('atlas'))return false;const cell=art.atlas.naturalWidth/4,n=SPRITES[name];ctx.save();ctx.globalAlpha*=alpha;const crop={crown:[1,2.04,1,.75],wings:[2,2.06,1,.8],bracelet:[3,2.1,1,.68],adult:[1,2.86,1,1.14],child:[2,2.9,1,1.1]}[name]||[n%4,Math.floor(n/4),1,1];ctx.drawImage(art.atlas,crop[0]*cell,crop[1]*cell,crop[2]*cell,crop[3]*cell,x-w/2,y-h/2,w,h);ctx.restore();return true;}
 const artReady=name=>art[name].complete&&art[name].naturalWidth>0;
@@ -163,7 +165,7 @@ async function requestFrame(now){
   try{const bitmap=await createImageBitmap(capture);if(token!==epoch){bitmap.close();return;}worker.postMessage({type:'frame',frame:bitmap,timestamp:now},[bitmap]);}
   catch(error){if(token===epoch){busy=false;fail(`Frame processing failed: ${error.message}`);}}
 }
-function startRound(){remix=new FruitRemix();jumpTracker=new JumpTracker();treeItems=[];shakeCooldown=0;shakePending=false;treeWobble=0;swipeTrails.clear();popRings=[];hazardClock=0;caughtPets=[];round=new Round(mode);phase='playing';targets=[];particles=[];labels=[];slices=[];spawnClock=1;spawnCount=1;readyClock=0;manualPause=false;previousActive=false;mousePrev=null;$('ready-bar').hidden=true;$('results').hidden=true;$('pause').hidden=false;$('pause').textContent='Pause';status('');canvas.focus();}
+function startRound(){fairyGarden=new FairyGarden();remix=new FruitRemix();jumpTracker=new JumpTracker();treeItems=[];shakeCooldown=0;shakePending=false;treeWobble=0;swipeTrails.clear();popRings=[];hazardClock=0;caughtPets=[];round=new Round(mode);phase='playing';targets=[];particles=[];labels=[];slices=[];spawnClock=1;spawnCount=1;readyClock=0;manualPause=false;previousActive=false;mousePrev=null;$('ready-bar').hidden=true;$('results').hidden=true;$('pause').hidden=false;$('pause').textContent='Pause';status('');canvas.focus();}
 $('shake-tree').onclick=()=>{if(source==='demo'&&selectedGame==='pets'&&phase==='playing'&&!manualPause)shakePending=true;};
 $('start-round').onclick=startRound;$('again').onclick=startRound;
 $('stop').onclick=home;$('finish').onclick=home;
@@ -189,10 +191,8 @@ function playerZone(index){
   return {x:clamp((l.x+r.x)/2,width/2+.06,1-width/2-.06),y:(upper+lower)/2,w:width,h:lower-upper};
 }
 function spawn(now,practice=false){
-  if(selectedGame==='bubbles'){
-    const r=level().radius*bubbleSize(spawnCount),left=spawnCount%2===0,zone=playerZone(spawnCount);
-    targets.push({id:++targetId,x:left?-r*H/W-.015:1+r*H/W+.015,y:clamp(zone.y+(Math.random()-.5)*zone.h,.24,.68),r,type:spawnCount%7===6?'star':'bubble',life:0,ttl:16,color:colors[spawnCount%colors.length],vx:(left?1:-1)*(.075+Math.random()*.035),vy:0,seed:Math.random()*6,blown:true});spawnCount++;return;
-  }
+  if(selectedGame==='bubbles')return; // FairyGarden owns all bubble generation.
+
 
   const zone=playerZone(spawnCount),star=!practice&&spawnCount%7===6;
   const cactus=!practice&&config.hazards&&difficulty!=='easy'&&hazardClock>=(difficulty==='hard'?3:4)&&targets.filter(t=>t.type==='cactus').length<2&&now>recoveryUntil;
@@ -248,7 +248,8 @@ function step(dt,now){
     hazardClock+=dt;
     spawnClock+=dt;const practice=phase==='ready',interval=practice?1.3:level().interval;
     if(selectedGame==='remix'){for(const target of remix.update(dt,round.time,H/W,playerZone(spawnCount).y,Math.random,source==='demo'?1:remixRoster.tracks.filter(p=>p.joined&&now-p.seen<=1500).length)){if(targets.length<32)targets.push({...target,id:++targetId});}}
-    if(selectedGame!=='remix'&&selectedGame!=='pets'&&spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
+    if(selectedGame==='bubbles')for(const target of fairyGarden.update(dt,H/W,Math.max(0,28-targets.length)))targets.push({...target,id:++targetId});
+    if(selectedGame!=='bubbles'&&selectedGame!=='remix'&&selectedGame!=='pets'&&spawnClock>=interval&&targets.length<level().max+(config.hazards&&difficulty!=='easy'&&hazardClock>=4?1:0)){spawnClock=0;spawn(now,practice);}
     if(selectedGame==='pets'){
       shakeCooldown=Math.max(0,shakeCooldown-dt);treeWobble=Math.max(0,treeWobble-dt);
       const bodies=players.map(p=>{const points=[11,12,23,24].map(i=>p.pose[i]);return {id:p.id,y:points.reduce((sum,v)=>sum+screenPoint(v).y,0)/4,height:Math.abs(screenPoint(p.pose[23]).y-screenPoint(p.pose[11]).y),confidence:Math.min(...points.map(v=>v.visibility??1))};});
@@ -262,8 +263,8 @@ function step(dt,now){
       for(const item of treeItems)item.shown+=(item.growth-item.shown)*Math.min(1,dt*4);
       shakePending=false;
     }
-    for(const t of targets){t.prev={x:t.x,y:t.y};moveTarget(t,dt,selectedGame,difficulty);}
-    const hit=targets.filter(t=>{if(selectedGame==='pets'){const net=treeNets.find(n=>netContact(t,n,W,H,now));if(!net)return false;caughtPets.push({type:t.type,fruit:t.fruit,r:t.r,x:t.x,y:t.y,net,life:0});return true;}return controls.some(h=>{
+    for(const t of targets){t.prev={x:t.x,y:t.y};if(t.fairyBubble)moveFairyBubble(t,dt,H/W);else moveTarget(t,dt,selectedGame,difficulty);}
+    const hit=targets.filter(t=>{if(t.fairyBubble&&t.life<t.popDelay)return false;if(selectedGame==='pets'){const net=treeNets.find(n=>netContact(t,n,W,H,now));if(!net)return false;caughtPets.push({type:t.type,fruit:t.fruit,r:t.r,x:t.x,y:t.y,net,life:0});return true;}return controls.some(h=>{
       if(t.tossed&&(t.life<.25||t.x*W<t.r*H||t.x*W>W-t.r*H))return false;
       if(isFruit()&&t.type!=='cactus'&&!canSlice(h,now))return false;
       if(selectedGame==='remix'&&Math.hypot(h.x-h.prev.x,h.y-h.prev.y)<(h.direct?.004:.008))return false;
@@ -275,11 +276,11 @@ function step(dt,now){
       if(practice){burst(t,0);continue;}
       const outcome=round.hit(t);if(!outcome)continue;
       if(selectedGame==='remix'){const combo=remix.hit(t.slicer,t,now);round.score+=combo.bonus;if(combo.bonus){labels.push({x:t.x*W,y:t.y*H-55,text:combo.count+' FRUIT COMBO! +'+combo.bonus,life:0});if(sound&&audio?.state==='running')remixSliceSound(audio,true);}}
-      burst(t,outcome.points);$('score').textContent=round.score.toLocaleString();
+      burst(t,outcome.points);if(selectedGame==='bubbles'&&t.giant){labels.push({x:t.x*W,y:t.y*H-40,text:'Bubble shower!',life:0});for(const child of splitGiant(t,H/W))targets.push({...child,id:++targetId});}$('score').textContent=round.score.toLocaleString();
       if(outcome.cactus){toast('Ouch! Cactus −'+outcome.penalty+' points. Combo reset.');}
       else {const old=rewardLevel(totalPops);totalPops++;updateRewards();if(rewardLevel(totalPops)>old)toast(`✦ ${REWARDS[old].name} for everyone!`);}
     }
-    const ids=new Set(hit.map(t=>t.id));targets=targets.filter(t=>!ids.has(t.id)&&t.life<t.ttl&&(t.treeDrop?t.y<1.12:t.tossed?t.y<1.3&&t.x>-t.r*H/W*2-.1&&t.x<1+t.r*H/W*2+.1:t.blown?t.x>-.25&&t.x<1.25&&t.y>.12&&t.y<.8:t.y>.07&&t.y<.83));
+    const ids=new Set(hit.map(t=>t.id));targets=targets.filter(t=>!ids.has(t.id)&&t.life<t.ttl&&(t.fairyBubble?true:t.treeDrop?t.y<1.12:t.tossed?t.y<1.3&&t.x>-t.r*H/W*2-.1&&t.x<1+t.r*H/W*2+.1:t.blown?t.x>-.25&&t.x<1.25&&t.y>.12&&t.y<.8:t.y>.07&&t.y<.83));
   }
   if(active){caughtPets.forEach(p=>{p.life+=dt;const net=treeNets.find(n=>n.id===p.net.id);if(net)p.net=net;});caughtPets=caughtPets.filter(p=>p.life<2.4);}
   popRings.forEach(p=>p.life+=dt);popRings=popRings.filter(p=>p.life<.65);
@@ -374,7 +375,8 @@ function draw(now){const t=now/1000;background(t);if(selectedGame==='pets'&&phas
   visiblePlayers.forEach(p=>wearables(p,true,t));
   if(source!=='demo'&&lastResult&&now-lastResult<600){const r=imageRect();ctx.save();ctx.translate(r.x+r.w,r.y);ctx.scale(-1,1);ctx.globalAlpha=phase==='ended'?.35:1;ctx.drawImage(frameCanvas,0,0,r.w,r.h);ctx.restore();}
   visiblePlayers.forEach(p=>wearables(p,false,t));
-  for(const target of targets){const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit'){ctx.save();ctx.translate(x,y);ctx.rotate(target.remix&&!reduceMotion?target.rotation+target.spin*target.life:0);fruitArt(0,0,r,target.fruit);ctx.restore();}else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));}
+  if(selectedGame==='bubbles')drawFairies();
+  for(const target of targets){const x=target.x*W,y=target.y*H,r=target.r*H*(1+Math.sin(t*2+target.seed)*.025);if(target.treeDrop)treasureArt(x,y,r,target);else if(target.type==='cactus')cactus(x,y,r);else if(target.type==='apple'||target.type==='orange')fruitArt(x,y,r,target.fruit);else if(target.type==='fruit'){ctx.save();ctx.translate(x,y);ctx.rotate(target.remix&&!reduceMotion?target.rotation+target.spin*target.life:0);fruitArt(0,0,r,target.fruit);ctx.restore();}else if(target.type==='cat'||target.type==='dog')petArt(x,y,r,target.type);else bubble(x,y,r,target.color,target.type,Math.min(1,(target.ttl-target.life)/1.2));if(target.giant){ctx.save();ctx.strokeStyle='#fff3a6';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,r*1.22,0,Math.PI*2);ctx.stroke();for(let i=0;i<3;i++){const a=i*Math.PI*2/3+(reduceMotion?0:t*.6);star(x+Math.cos(a)*r*.8,y+Math.sin(a)*r*.8,5,'#fff3ae');}ctx.restore();}}
   for(const s of slices){if(s.remix){ctx.save();ctx.globalAlpha=Math.min(1,(1.1-s.life)*3);drawJuicyHalf(ctx,s,reduceMotion);ctx.restore();continue;}ctx.save();ctx.globalAlpha=1-s.life/.65;ctx.translate(s.x,s.y);ctx.rotate(s.angle);ctx.beginPath();ctx.rect(-s.r*1.5,s.side<0?-s.r*1.5:s.offset,s.r*3,s.side<0?s.r*1.5+s.offset:s.r*1.5-s.offset);ctx.clip();ctx.rotate(-s.angle);fruitArt(0,0,s.r,s.fruit);ctx.restore();}
   for(const pop of popRings){ctx.save();ctx.globalAlpha=1-pop.life/.65;const radius=pop.r*(1+pop.life*(reduceMotion?.35:1.8));ctx.lineWidth=3*(1-pop.life/.65)+1;ctx.strokeStyle='#fff9e9';ctx.beginPath();ctx.arc(pop.x,pop.y,radius,0,Math.PI*2);ctx.stroke();ctx.strokeStyle=pop.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(pop.x,pop.y,radius*1.16,0,Math.PI*2);ctx.stroke();for(let i=0;i<8;i++){const a=i*Math.PI/4;star(pop.x+Math.cos(a)*radius,pop.y+Math.sin(a)*radius,5*(1-pop.life/.65),'#fff3ab',a+pop.life);}ctx.restore();}
   for(const [i,p] of particles.entries()){ctx.globalAlpha=1-p.life/p.ttl;if(i%4===0&&artReady('atlas'))sprite('sparkles',p.x,p.y,p.r*5);else ellipse(p.x,p.y,p.r,p.r,p.color);}ctx.globalAlpha=1;
@@ -429,4 +431,9 @@ function drawNet(net){
  ctx.restore();outline();ctx.strokeStyle='#66503c';ctx.lineWidth=6;ctx.stroke();ctx.strokeStyle='#caa36a';ctx.lineWidth=4;ctx.stroke();ctx.setLineDash([3,5]);ctx.strokeStyle='#ffedbf';ctx.lineWidth=1.6;ctx.stroke();ctx.setLineDash([]);
  for(const p of [a,b]){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(-.25);ctx.shadowColor='#3b2d3940';ctx.shadowBlur=4;ctx.fillStyle='#93633d';ctx.beginPath();ctx.roundRect(-7,-17,14,34,5);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#e5bf88';ctx.lineWidth=2;for(let i=-10;i<=10;i+=5){ctx.beginPath();ctx.moveTo(-5,i);ctx.lineTo(5,i+2);ctx.stroke();}ctx.restore();}
  ctx.restore();
+}
+
+function drawFairies(){
+ if(!artReady('fairies'))return;const cell=art.fairies.naturalWidth/2,size=H*.16;
+ for(const f of fairyGarden.fairies){ctx.save();ctx.translate(f.x*W,f.y*H);ctx.scale(f.face,1);ctx.drawImage(art.fairies,(f.kind%2)*cell,Math.floor(f.kind/2)*cell,cell,cell,-size/2,-size/2,size,size);ctx.restore();if(f.wand)star(f.wand.x*W,f.wand.y*H,reduceMotion?3:3+Math.sin(f.life*6), '#fff5bf');}
 }
