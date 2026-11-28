@@ -7,7 +7,7 @@ export class TrackingDiagnostics {
  sample(now,ms,age){this.frameCount++;this.frames.push({ms:Number.isFinite(ms)?ms:0,age:Math.max(0,age),interval:this.lastFrame===null?0:now-this.lastFrame});this.lastFrame=now;if(this.frames.length>60)this.frames.shift();}
  state(code,now){if(code===this.current)return;if(this.current!=='locked'&&this.current!=='loading'&&this.current!=='manual'&&this.current!=='select')this.pauseMs+=Math.max(0,now-this.since);if(!['locked','loading','manual','select'].includes(code))this.pauses[code]=(this.pauses[code]||0)+1;this.current=code;this.since=now;}
  summary(){const n=this.frames.length;if(!n)return 'Waiting for camera frames.';const ms=this.frames.reduce((v,f)=>v+f.ms,0)/n,intervals=this.frames.filter(f=>f.interval>0&&f.interval<2000),rate=intervals.length?1000/(intervals.reduce((v,f)=>v+f.interval,0)/intervals.length):0;return `${rate.toFixed(1)} tracking frames/s · ${Math.round(ms)} ms processing · ${this.current}`;}
- report(){return JSON.stringify({build:'runner-09',delegate:this.delegate,frames:this.frameCount,recent:this.summary(),maxRecentFrameAgeMs:Math.round(Math.max(0,...this.frames.map(f=>f.age))),pauseTransitionsByCause:this.pauses,completedTrackingPauseMs:Math.round(this.pauseMs),currentState:this.current},null,2);}
+ report(){return JSON.stringify({build:'runner-10',delegate:this.delegate,frames:this.frameCount,recent:this.summary(),maxRecentFrameAgeMs:Math.round(Math.max(0,...this.frames.map(f=>f.age))),pauseTransitionsByCause:this.pauses,completedTrackingPauseMs:Math.round(this.pauseMs),currentState:this.current},null,2);}
 }
 function histogram(image,points){
  const bins=new Array(66).fill(0);let count=0;

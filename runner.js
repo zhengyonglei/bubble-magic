@@ -1,27 +1,30 @@
-import {RunnerEffects} from './runner-effects.js?v=runner-09';
-import {Runner,PlayerLock,Movement,courseCue} from './runner-core.js?v=runner-09';
-import {appearance,drawTracking,TrackingDiagnostics} from './runner-tracking.js?v=runner-09';
+import {RunnerAudio} from './runner-audio.js?v=runner-10';
+import {RunnerEffects} from './runner-effects.js?v=runner-10';
+import {Runner,PlayerLock,Movement,courseCue} from './runner-core.js?v=runner-10';
+import {appearance,drawTracking,TrackingDiagnostics} from './runner-tracking.js?v=runner-10';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
 const diagnostics=new TrackingDiagnostics();
 let detected=[],selectedIndex=-1,outlineStamp=0;
+const audio=new RunnerAudio();
 const effects=new RunnerEffects(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false);
 const held=new Set();let w=0,h=0;
 function clearInput(){held.clear();motion={};}
-function stopCamera(){session++;lock.reset();detected=[];selectedIndex=-1;drawTracking($('tracking-overlay').getContext('2d'),[],-1,false,480,360);worker?.terminate();worker=null;stream?.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;ready=false;busy=false;motion={};$('camera-view').hidden=true;}
-function begin(){stopCamera();diagnostics.reset();effects.reset();movement=new Movement();lastPose=0;lastCapture=0;stamp=0;game=new Runner();active=true;paused=false;mode='demo';clearInput();$('welcome').hidden=true;$('finish').hidden=true;$('controls').hidden=false;$('pause').textContent='Pause';canvas.focus();}
+function stopCamera(){audio.stop();session++;lock.reset();detected=[];selectedIndex=-1;drawTracking($('tracking-overlay').getContext('2d'),[],-1,false,480,360);worker?.terminate();worker=null;stream?.getTracks().forEach(t=>t.stop());stream=null;$('video').srcObject=null;ready=false;busy=false;motion={};$('camera-view').hidden=true;}
+function begin(){audio.unlock();stopCamera();diagnostics.reset();effects.reset();movement=new Movement();lastPose=0;lastCapture=0;stamp=0;game=new Runner();active=true;paused=false;mode='demo';clearInput();$('welcome').hidden=true;$('finish').hidden=true;$('controls').hidden=false;$('pause').textContent='Pause';canvas.focus();}
 $('demo').onclick=begin;$('again').onclick=()=>mode==='camera'?startCamera():begin();
 $('stop-camera').onclick=()=>{stopCamera();mode='demo';clearInput();};
 $('select').onclick=()=>{selectedIndex=-1;lock.reset();movement=new Movement();motion={};lastPose=0;};
-$('pause').onclick=()=>{if(!active)return;paused=!paused;clearInput();$('pause').textContent=paused?'Resume':'Pause';if(!paused)canvas.focus();};
+$('runner-sound').onclick=()=>{audio.enabled=!audio.enabled;if(audio.enabled)audio.unlock();else audio.stop();$('runner-sound').textContent=audio.enabled?'Sound on':'Sound off';$('runner-sound').setAttribute('aria-pressed',String(audio.enabled));};
+$('pause').onclick=()=>{if(!active)return;paused=!paused;if(paused)audio.stop();clearInput();$('pause').textContent=paused?'Resume':'Pause';if(!paused)canvas.focus();};
 $('fullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('message').textContent='Fullscreen unavailable. You can use the browser fullscreen command.';}};
 function action(a){if(!active||paused||mode==='camera')return;if(a==='left')game.lane=Math.max(-1,game.lane-1);if(a==='right')game.lane=Math.min(1,game.lane+1);if(a==='jump')game.hop();}
 const keys={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',Space:'jump'};
 window.addEventListener('keydown',e=>{const a=keys[e.code];if(!a||!active||e.target.tagName==='BUTTON'||e.target.tagName==='A')return;e.preventDefault();if(!e.repeat)action(a);held.add(e.code);});
 window.addEventListener('keyup',e=>held.delete(e.code));
 document.querySelectorAll('[data-action]').forEach(b=>{b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.add(`pointer:${e.pointerId}:${b.dataset.action}`);action(b.dataset.action);};const end=e=>held.delete(`pointer:${e.pointerId}:${b.dataset.action}`);b.onpointerup=end;b.onpointercancel=end;b.onlostpointercapture=end;});
-function suspend(){clearInput();if(active){paused=true;$('pause').textContent='Resume';}if(mode==='camera'){lock.wait('Paused — checking your saved player when you return.');lastPose=0;}}
+function suspend(){audio.stop();clearInput();if(active){paused=true;$('pause').textContent='Resume';}if(mode==='camera'){lock.wait('Paused — checking your saved player when you return.');lastPose=0;}}
 window.addEventListener('blur',suspend);document.addEventListener('visibilitychange',()=>{if(document.hidden)suspend();stream?.getVideoTracks().forEach(t=>t.enabled=!document.hidden);});window.addEventListener('pagehide',stopCamera);
 function heldAction(a){return [...held].some(k=>keys[k]===a||k.endsWith(':'+a));}
 async function startCamera(){
@@ -31,7 +34,7 @@ async function startCamera(){
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-09');
+    worker=new Worker('./vision-worker.js?v=runner-10');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(token!==session){data.frame?.close();return;}
@@ -64,7 +67,9 @@ async function infer(now){
 const bark=['#80533b','#523c30','#b58350'],leaf=['#337d50','#20583e','#85b45d'],stone=['#9ea996','#7a8d7d','#c6c9a6'];
 const noise=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
 function project([x,y,z]){const d=z+7,f=Math.min(w*.85,h*1.3);return [w*.52+x*f/d,h*.30+(3.2-y)*f/d];}
+let avatarTransform=null;
 function face(vertices,color){
+ if(avatarTransform)vertices=vertices.map(avatarTransform);
  // Clip crossing polygons instead of dropping whole faces as they pass the camera.
  const near=-6.8,clipped=[];
  for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length],insideA=a[2]>=near,insideB=b[2]>=near;if(insideA)clipped.push(a);if(insideA!==insideB){const t=(near-a[2])/(b[2]-a[2]);clipped.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]),near]);}}
@@ -103,17 +108,20 @@ function destination(z){
  for(let i=0;i<7;i++)box(-2.4+i*.8,.19,z-1,.75,.025,.45,[i%2?'#fff1af':'#c89b44']);
 }
 function explorer(x,y,walk){
+ const pose=effects.pose();y+=pose.bounce;walk*=1-Math.min(1,effects.stumble/.3);
  const shadow=.5-y*.08;face([[x-shadow,.025,-.35],[x+shadow,.025,-.35],[x+shadow,.025,.4],[x-shadow,.025,.4]],'#49664d');
+ avatarTransform=([vx,vy,vz])=>{const dy=vy-y-.15,c=Math.cos(pose.tilt),s=Math.sin(pose.tilt);return [vx,y+.15+dy*c+vz*s,vz*c-dy*s];};
  for(const side of [-1,1]){const stride=walk*side;
  box(x+side*.18,.13+y+Math.max(0,stride),stride,.23,.43,.25,['#335e69','#244651','#56838a']);
  box(x+side*.18,.05+y+Math.max(0,stride),stride-.1,.26,.16,.4,['#684938','#493b30','#9c7450']);
- box(x+side*.43,.63+y,-stride,.21,.36,.25,['#db9a4e','#ad7237','#f8c66e']);box(x+side*.43,.48+y,-stride,.18,.18,.2,['#efbf8f','#bc886a','#ffe0ad']);}
+ box(x+side*(.43+pose.spread),.63+y+pose.spread*.6,-stride,.21,.36,.25,['#db9a4e','#ad7237','#f8c66e']);box(x+side*(.43+pose.spread*1.2),.48+y+pose.spread*.6,-stride,.18,.18,.2,['#efbf8f','#bc886a','#ffe0ad']);}
  box(x,.57+y,0,.65,.62,.39,['#e7ad55','#bc803e','#ffe096']);box(x,.57+y,-.015,.68,.09,.42,['#684d39','#4d3d31','#a88350']);
  const head=(1.24)+y;
  box(x,head,0,.5,.46,.45,['#dfaf82','#b88160','#f9d49f']);box(x,head+.26,-.24,.52,.2,.08,['#5c3c2c','#412e24','#815333']);
  box(x,head+.42,.01,.79,.10,.67,['#c29756','#987342','#ffe0a0']);box(x,head+.52,.04,.5,.18,.43,['#dbb574','#ae8c54','#ffe3a6']);box(x,head+.53,-.19,.5,.06,.025,['#638b77']);
  for(const side of [-1,1])box(x+side*.23,.71+y,-.22,.065,.42,.05,['#5a7560']);
  box(x,.69+y,-.30,.44,.43,.21,['#367f79','#275e60','#73ada0']);box(x,.72+y,-.42,.31,.17,.045,['#4b9990','#357970','#82b9a2']);box(x,.91+y,-.425,.08,.08,.03,['#edcf7e']);
+ avatarTransform=null;
 }
 function draw(){
  const r=canvas.getBoundingClientRect();if(w!==Math.round(r.width)||h!==Math.round(r.height)){w=canvas.width=Math.round(r.width);h=canvas.height=Math.round(r.height);}
@@ -145,7 +153,7 @@ function frame(now){const dt=(now-last)/1000;last=now;
  const trackingPause=mode==='camera'&&(!ready||!lock.target||lock.blocked||lock.waiting||now-lastPose>700);
  if(active&&mode==='camera'){diagnostics.state(paused?'manual':trackingPause?(ready?lock.code:'loading'):'locked',now);$('tracking-stats').textContent=diagnostics.summary();}
  if(active){game.step(dt,{moving:true,paused:paused||trackingPause});
- for(const event of game.events.splice(0))effects.emit(event);
+ for(const event of game.events.splice(0)){effects.emit(event);if(event.type==='hit')audio.bump();}
  $('section-cue').textContent=courseCue(game.distance);$('section-cue').hidden=!$('section-cue').textContent;
  $('stars').textContent=game.stars;$('progress').value=game.distance;$('distance').textContent=`${Math.floor(game.distance)} / 350 m`;
  const message=paused?'Adventure paused. Take your time.':trackingPause?lock.reason:game.message;if($('message').textContent!==message)$('message').textContent=message;

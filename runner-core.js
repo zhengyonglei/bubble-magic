@@ -1,22 +1,24 @@
-import {appearanceScore} from './runner-tracking.js?v=runner-09';
+import {appearanceScore} from './runner-tracking.js?v=runner-10';
 // Pure simulation and conservative session tracking. Appearance cues remain in session memory only.
 export const COURSE_SECTIONS=[{start:60,end:96,type:'jump',name:'Hopping Logs'},{start:190,end:226,type:'jump',name:'River Hops'}];
 export function courseCue(distance){const section=COURSE_SECTIONS.find(s=>distance>=s.start-18&&distance<s.end);if(!section)return distance>=310?'RAINBOW GROVE · Follow the golden entrance':'';if(distance<section.start)return section.name+' · '+'Jump section ahead';const next=[6,18,30].map(d=>section.start+d).find(z=>z>distance);return section.name+' · '+(!next?'Great! Keep going':next-distance<2.7?'JUMP NOW!':'Get ready to jump');}
 export class Runner {
-  constructor(){this.events=[];this.distance=0;this.lane=0;this.x=0;this.jump=0;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':'star',done:false})).filter(item=>item.kind==='star'||!COURSE_SECTIONS.some(s=>item.z>=s.start-18&&item.z<=s.end+6));for(const section of COURSE_SECTIONS){for(const offset of [6,18,30])this.items.push({z:section.start+offset,lane:0,kind:'log',fullWidth:true,done:false});}this.items.sort((a,b)=>a.z-b.z);}
+  constructor(){this.events=[];this.distance=0;this.lane=0;this.x=0;this.jump=0;this.stumble=0;this.landingReward=false;this.stars=0;this.finished=false;this.message='Follow the star trail!';this.items=Array.from({length:66},(_,i)=>({z:12+i*5,lane:[0,-1,1,0,1,-1][i%6],kind:i%7===4?'log':'star',done:false})).filter(item=>item.kind==='star'||!COURSE_SECTIONS.some(s=>item.z>=s.start-18&&item.z<=s.end+6));for(const section of COURSE_SECTIONS){for(const offset of [6,18,30])this.items.push({z:section.start+offset,lane:0,kind:'log',fullWidth:true,done:false});}this.items.sort((a,b)=>a.z-b.z);}
   hop(){if(this.jump===0&&!this.finished)this.jump=.85;}
   step(dt,{moving=false,paused=false}={}){
     if(paused||this.finished)return;
     dt=Math.max(0,Math.min(.05,dt));
-    this.jump=Math.max(0,this.jump-dt);this.x+=(this.lane*1.5-this.x)*Math.min(1,dt*12);
+    this.stumble=Math.max(0,this.stumble-dt);
+    const wasAirborne=this.jump>0;this.jump=Math.max(0,this.jump-dt);
+    if(wasAirborne&&this.jump===0&&this.landingReward){this.events.push({type:'land',lane:this.lane});this.landingReward=false;}this.x+=(this.lane*1.5-this.x)*Math.min(1,dt*12);
     if(!moving)return;
-    const old=this.distance;this.distance=Math.min(350,old+dt*6);
+    const old=this.distance;this.distance=Math.min(350,old+dt*6*(1-.65*this.stumble/.9));
     for(const item of this.items){
       if(item.done||item.z>this.distance||item.z<=old)continue;item.done=true;
       if(!item.fullWidth&&Math.abs(item.lane*1.5-this.x)>.65)continue;
       if(item.kind==='star'){this.events.push({type:'star',lane:item.lane});this.stars++;this.message='Lovely! A star for your garden.';}
-      else if(item.kind==='log'&&this.height()<.6){this.events.push({type:'hit',kind:item.kind,lane:item.fullWidth?this.lane:item.lane});this.message='Soft bump! Keep exploring — your stars are safe.';}
-      else{this.events.push({type:'clear',kind:item.kind,lane:item.lane});this.message='Super jump!';}
+      else if(item.kind==='log'&&this.height()<.6){this.stumble=.9;this.jump=0;this.landingReward=false;this.events.push({type:'hit',kind:item.kind,lane:item.fullWidth?this.lane:item.lane});this.message='Soft bump! Keep exploring — your stars are safe.';}
+      else{this.landingReward=true;this.events.push({type:'clear',kind:item.kind,lane:item.fullWidth?this.lane:item.lane});this.message='Super jump!';}
     }
     if(this.distance>=350){this.finished=true;this.events.push({type:'finish',lane:0});this.message='You made it to the rainbow grove!';}
   }

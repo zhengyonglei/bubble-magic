@@ -100,3 +100,7 @@ Synthetic regressions cover sustained mild posture/colour changes, brief missing
 
 ## Runner build 09 — obstacle visibility
 Collision completion no longer removes logs from rendering. Logs persist behind the player; near-camera polygons clip instead of disappearing. Decorative stone gateways also remain through passage. Regression tests cover processed logs at desktop/portrait/TV sizes, no duplicate collision events, near-plane clipping and gateway lifetime. All 117 tests and syntax checks pass.
+
+
+## Runner build 10 — gentle stumble and landing feedback
+Confirmed log hits trigger a 0.9-second backward tilt/arm spread and a gradual return from 35% running speed, with a small dust puff and quiet optional synthesized bump. Stars are preserved; no fall or restart. Successful log jumps emit one landing bounce/sparkle event. Reduced motion removes tilt/bounce. Audio initializes only on a play gesture, has a Sound toggle, and stops on pause/session end. Tests cover hit slowdown/recovery, pause/tracking freeze, no false hit on missing tracking, exactly-once landing events, sound lifecycle and mute/failure fallback. Actual speakers, HDMI and physical webcam remain untested.

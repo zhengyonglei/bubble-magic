@@ -1,3 +1,4 @@
+import {RunnerAudio} from '../runner-audio.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -14,7 +15,7 @@ function page(width=1280,height=720){
  const element=id=>els[id]??=( {hidden:false,textContent:'',play:async()=>{},focus(){},getBoundingClientRect:()=>({width,height}),getContext:()=>context2d});
  const document={getElementById:element,createElement:()=>element('capture'),querySelectorAll:()=>buttons,addEventListener:(n,f)=>events[n]=f};
  const window={addEventListener:(n,f)=>events[n]=f};
- const c=vm.createContext({courseCue,RunnerEffects,Runner,PlayerLock,Movement,Worker:FakeWorker,navigator,appearance,drawTracking,TrackingDiagnostics,document,window,performance:{now:()=>clock.now},requestAnimationFrame(){},console});
+ const c=vm.createContext({RunnerAudio,courseCue,RunnerEffects,Runner,PlayerLock,Movement,Worker:FakeWorker,navigator,appearance,drawTracking,TrackingDiagnostics,document,window,performance:{now:()=>clock.now},requestAnimationFrame(){},console});
  vm.runInContext(readFileSync(new URL('../runner.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),c);
  return {c,els,events,buttons,clock,workers,cameraCalls,run:s=>vm.runInContext(s,c),key:(code)=>events.keydown({code,target:{tagName:'CANVAS'},preventDefault(){}})};
 }
@@ -37,7 +38,7 @@ test('camera replay reopens camera and recalibrates lane center before running',
 test('star hit and finish events produce feedback once and reset on replay',()=>{const p=page();p.els.demo.onclick();p.run("game.items=[{z:.1,lane:0,kind:'star'},{z:.4,lane:0,kind:'log'}];frame(50)");assert.equal(p.run('effects.flights.length'),1);p.run('frame(100)');assert.ok(p.run('effects.hit')>0);assert.ok(p.run('effects.labels.some(p=>p.text.includes("BONK"))'));p.els.pause.onclick();const hit=p.run('effects.hit');p.run('frame(150)');assert.equal(p.run('effects.hit'),hit);p.els.pause.onclick();p.run('game.distance=349.9;frame(200)');assert.ok(p.run('effects.celebration')>0);assert.equal(p.els.finish.hidden,false);p.els.again.onclick();assert.equal(p.run('effects.celebration'),0);assert.equal(p.run('effects.particles.length'),0);});
 
 test('duck controls and tunnels are absent from the shipped interface and simulation',()=>{const html=readFileSync(new URL('../runner.html',import.meta.url),'utf8');assert.doesNotMatch(html,/duck|squat|tunnel|arches/i);const p=page();p.els.demo.onclick();p.key('KeyS');p.key('ArrowDown');assert.equal(p.run('held.size'),0);assert.equal(p.run('game.items.some(i=>i.kind==="arch")'),false);});
-test('copy diagnostics works without clipboard permission through a visible report',async()=>{const p=page();p.els['tracking-report']={focus(){},select(){},hidden:true};p.run("diagnostics.sample(100,45,55);diagnostics.state('pose-gap',100)");await p.els['copy-tracking'].onclick();assert.equal(p.els['tracking-report'].hidden,false);assert.match(p.els['tracking-report'].value,/runner-09/);});
+test('copy diagnostics works without clipboard permission through a visible report',async()=>{const p=page();p.els['tracking-report']={focus(){},select(){},hidden:true};p.run("diagnostics.sample(100,45,55);diagnostics.state('pose-gap',100)");await p.els['copy-tracking'].onclick();assert.equal(p.els['tracking-report'].hidden,false);assert.match(p.els['tracking-report'].value,/runner-10/);});
 
 test('processed logs remain rendered past the player until behind the camera, without repeat collisions',()=>{
  for(const size of [[1280,720],[390,844],[1920,1080]])for(const fullWidth of [false,true]){
@@ -51,3 +52,5 @@ test('processed logs remain rendered past the player until behind the camera, wi
 });
 test('near camera faces are clipped instead of vanishing and projections stay finite',()=>{const p=page(390,844);p.run("faces=[];face([[-1,0,-7.2],[1,0,-6],[1,1,-6],[-1,1,-7.2]],'#fff')");assert.equal(p.run('faces.length'),1);assert.ok(p.run('faces[0].vertices.every(v=>v[2]>=-6.8&&project(v).every(Number.isFinite))'));});
 test('decorative gateways are retained while the camera approaches and passes through',()=>{const p=page();p.run('const originalRuin=ruin;let gates=[];ruin=z=>gates.push(z);game.distance=27;draw()');assert.ok(p.run('gates.includes(3)'));p.run('gates=[];game.distance=32;draw()');assert.ok(p.run('gates.includes(-2)'));});
+
+test('tracking uncertainty cannot create a stumble and freezes an existing recovery',()=>{const p=page();p.els.demo.onclick();p.run("mode='camera';ready=true;busy=true;lock.target={};lock.wait('Tracking gap');game.items=[{z:.1,lane:0,kind:'log'}];frame(50)");assert.equal(p.run('effects.stumble'),0);assert.equal(p.run('game.stumble'),0);p.run('lock.waiting=false;lastPose=100;frame(100)');assert.ok(p.run('effects.stumble')>0);const before=p.run('JSON.stringify([game.stumble,effects.pose(),game.distance])');p.run("lock.wait('Tracking gap');frame(150)");assert.equal(p.run('JSON.stringify([game.stumble,effects.pose(),game.distance])'),before);p.run('draw()');assert.equal(p.run('avatarTransform'),null);});
