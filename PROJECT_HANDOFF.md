@@ -101,3 +101,6 @@ Twelve shuffled surprise themes combine colored mud, expanding rings and playful
 Mouse/mobile demo: two explicitly labelled pretend players; Jump! button, Space or tap simulates takeoff and landing. Camera mode keeps real cutouts. Existing round lengths, music toggle, fullscreen and shared wardrobe apply. No new raster assets: scenery, puddles and mud are resolution-independent Canvas art; surprise icons use system emoji.
 
 Validation: npm run check and 125 tests passing; browser demo verified menu, jump, score and reward updates. Physical webcam jump sensitivity and multiplayer crossings still require laptop validation.
+
+## Shared puddle update — 0.16.1
+Replaced separate player puddles with one stationary, nearly full-width pool. Added rolling hills, a yellow house with red roof, windows and a winding path. Six rotating splash physics profiles vary fans, fountains, lateral spray, large blobs, fine droplets and twin jets; scalloped splash sheets and spinning droplet shapes add variety. Directed teammate mud still attaches only on arrival. Existing particle caps, small-jump detection, scoring and cutouts are preserved. Browser preview verified pool/house composition and scoring without console errors; 131 tests pass.

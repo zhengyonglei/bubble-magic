@@ -31,3 +31,9 @@ test('solo play, nonrepeating surprises, together bonus visuals and resource cap
  p.update(.8,[b],800);assert.ok(p.splats.length<=48);
  p.update(.01,[],810);assert.equal(p.splats.length,0);
 });
+
+test('six splash patterns vary size, velocity and shape while retaining directed teammate mud',()=>{
+ const p=new PuddleParty(()=>.5),b=[body(),body(2,.7)],styles=new Set(),counts=new Set(),sizes=new Set(),velocities=new Set();
+ for(let i=0;i<6;i++){p.drops=[];p.land(b[0],b);styles.add(p.effects.at(-1).style);counts.add(p.drops.length);sizes.add(p.drops.at(-1).r);velocities.add(p.drops.at(-1).vx+':'+p.drops.at(-1).vy);assert.equal(p.drops.filter(d=>d.aimed).length,5);assert.equal(new Set(p.drops.map(d=>d.shape)).size,3);}
+ assert.equal(styles.size,6);assert.ok(counts.size>=5);assert.ok(sizes.size>=3);assert.equal(velocities.size,6);
+});
