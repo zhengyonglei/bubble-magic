@@ -96,3 +96,7 @@ Laptop acceptance checklist:
 ## Jungle Trail build 08 validation — 2026-11-28
 
 Synthetic regressions cover sustained mild posture/colour changes, brief missing appearance with a strict time limit, quick recovery from a pose gap, multi-frame crossing recovery, long-gap similar outfits, bounded reference learning, strong mismatch rejection, soft histogram boundaries, numeric diagnostics and clipboard fallback. Course/interface tests verify no duck action or low obstacles; existing jump, scoring, lifecycle and suite regressions remain. These do not establish real webcam accuracy, M1/M2 performance or child ergonomics. Next laptop test: select player, lower arms, stand/lean/jump naturally, introduce a distant newcomer then a crossing person, and copy diagnostics after pauses.
+
+
+## Runner build 09 — obstacle visibility
+Collision completion no longer removes logs from rendering. Logs persist behind the player; near-camera polygons clip instead of disappearing. Decorative stone gateways also remain through passage. Regression tests cover processed logs at desktop/portrait/TV sizes, no duplicate collision events, near-plane clipping and gateway lifetime. All 117 tests and syntax checks pass.

@@ -1,4 +1,4 @@
-import {appearanceScore} from './runner-tracking.js?v=runner-08';
+import {appearanceScore} from './runner-tracking.js?v=runner-09';
 // Pure simulation and conservative session tracking. Appearance cues remain in session memory only.
 export const COURSE_SECTIONS=[{start:60,end:96,type:'jump',name:'Hopping Logs'},{start:190,end:226,type:'jump',name:'River Hops'}];
 export function courseCue(distance){const section=COURSE_SECTIONS.find(s=>distance>=s.start-18&&distance<s.end);if(!section)return distance>=310?'RAINBOW GROVE · Follow the golden entrance':'';if(distance<section.start)return section.name+' · '+'Jump section ahead';const next=[6,18,30].map(d=>section.start+d).find(z=>z>distance);return section.name+' · '+(!next?'Great! Keep going':next-distance<2.7?'JUMP NOW!':'Get ready to jump');}

@@ -37,4 +37,17 @@ test('camera replay reopens camera and recalibrates lane center before running',
 test('star hit and finish events produce feedback once and reset on replay',()=>{const p=page();p.els.demo.onclick();p.run("game.items=[{z:.1,lane:0,kind:'star'},{z:.4,lane:0,kind:'log'}];frame(50)");assert.equal(p.run('effects.flights.length'),1);p.run('frame(100)');assert.ok(p.run('effects.hit')>0);assert.ok(p.run('effects.labels.some(p=>p.text.includes("BONK"))'));p.els.pause.onclick();const hit=p.run('effects.hit');p.run('frame(150)');assert.equal(p.run('effects.hit'),hit);p.els.pause.onclick();p.run('game.distance=349.9;frame(200)');assert.ok(p.run('effects.celebration')>0);assert.equal(p.els.finish.hidden,false);p.els.again.onclick();assert.equal(p.run('effects.celebration'),0);assert.equal(p.run('effects.particles.length'),0);});
 
 test('duck controls and tunnels are absent from the shipped interface and simulation',()=>{const html=readFileSync(new URL('../runner.html',import.meta.url),'utf8');assert.doesNotMatch(html,/duck|squat|tunnel|arches/i);const p=page();p.els.demo.onclick();p.key('KeyS');p.key('ArrowDown');assert.equal(p.run('held.size'),0);assert.equal(p.run('game.items.some(i=>i.kind==="arch")'),false);});
-test('copy diagnostics works without clipboard permission through a visible report',async()=>{const p=page();p.els['tracking-report']={focus(){},select(){},hidden:true};p.run("diagnostics.sample(100,45,55);diagnostics.state('pose-gap',100)");await p.els['copy-tracking'].onclick();assert.equal(p.els['tracking-report'].hidden,false);assert.match(p.els['tracking-report'].value,/runner-08/);});
+test('copy diagnostics works without clipboard permission through a visible report',async()=>{const p=page();p.els['tracking-report']={focus(){},select(){},hidden:true};p.run("diagnostics.sample(100,45,55);diagnostics.state('pose-gap',100)");await p.els['copy-tracking'].onclick();assert.equal(p.els['tracking-report'].hidden,false);assert.match(p.els['tracking-report'].value,/runner-09/);});
+
+test('processed logs remain rendered past the player until behind the camera, without repeat collisions',()=>{
+ for(const size of [[1280,720],[390,844],[1920,1080]])for(const fullWidth of [false,true]){
+  const p=page(...size);p.run(`game.items=[{z:.1,lane:0,kind:'log',fullWidth:${fullWidth}}];game.step(.05,{moving:true});draw()`);
+  assert.equal(p.run('game.items[0].done'),true);assert.equal(p.run('game.events.length'),1);
+  const withLog=p.run('faces.length');p.run('const savedItems=game.items;game.items=[];draw()');assert.ok(withLog>p.run('faces.length'));
+  p.run('game.items=savedItems;game.distance=3;draw()');const passed=p.run('faces.length');p.run('game.items=[];draw()');assert.ok(passed>p.run('faces.length'));
+  p.run('game.items=savedItems;game.distance=10;draw()');const gone=p.run('faces.length');p.run('game.items=[];draw()');assert.equal(gone,p.run('faces.length'));
+  p.run('game.items=savedItems;game.step(.05,{moving:true})');assert.equal(p.run('game.events.length'),1);
+ }
+});
+test('near camera faces are clipped instead of vanishing and projections stay finite',()=>{const p=page(390,844);p.run("faces=[];face([[-1,0,-7.2],[1,0,-6],[1,1,-6],[-1,1,-7.2]],'#fff')");assert.equal(p.run('faces.length'),1);assert.ok(p.run('faces[0].vertices.every(v=>v[2]>=-6.8&&project(v).every(Number.isFinite))'));});
+test('decorative gateways are retained while the camera approaches and passes through',()=>{const p=page();p.run('const originalRuin=ruin;let gates=[];ruin=z=>gates.push(z);game.distance=27;draw()');assert.ok(p.run('gates.includes(3)'));p.run('gates=[];game.distance=32;draw()');assert.ok(p.run('gates.includes(-2)'));});

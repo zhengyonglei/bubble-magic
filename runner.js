@@ -1,6 +1,6 @@
-import {RunnerEffects} from './runner-effects.js?v=runner-08';
-import {Runner,PlayerLock,Movement,courseCue} from './runner-core.js?v=runner-08';
-import {appearance,drawTracking,TrackingDiagnostics} from './runner-tracking.js?v=runner-08';
+import {RunnerEffects} from './runner-effects.js?v=runner-09';
+import {Runner,PlayerLock,Movement,courseCue} from './runner-core.js?v=runner-09';
+import {appearance,drawTracking,TrackingDiagnostics} from './runner-tracking.js?v=runner-09';
 const $=id=>document.getElementById(id),canvas=$('world'),ctx=canvas.getContext('2d');
 let game=new Runner(),active=false,paused=false,mode='demo',worker=null,stream=null,busy=false,ready=false,stamp=0,lastCapture=0,session=0;
 let lock=new PlayerLock(),movement=new Movement(),motion={},lastPose=0,last=performance.now(),faces=[];
@@ -31,7 +31,7 @@ async function startCamera(){
     const s=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480}},audio:false});
     if(token!==session){s.getTracks().forEach(t=>t.stop());return;}stream=s;$('video').srcObject=s;await $('video').play();
     if(token!==session)return;
-    worker=new Worker('./vision-worker.js?v=runner-08');
+    worker=new Worker('./vision-worker.js?v=runner-09');
     worker.onerror=()=>{ready=false;motion={};$('tracking').textContent='Tracking unavailable. Stop camera to use controls.';};
     worker.onmessage=({data})=>{
       if(token!==session){data.frame?.close();return;}
@@ -64,7 +64,12 @@ async function infer(now){
 const bark=['#80533b','#523c30','#b58350'],leaf=['#337d50','#20583e','#85b45d'],stone=['#9ea996','#7a8d7d','#c6c9a6'];
 const noise=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
 function project([x,y,z]){const d=z+7,f=Math.min(w*.85,h*1.3);return [w*.52+x*f/d,h*.30+(3.2-y)*f/d];}
-function face(vertices,color){if(vertices.some(v=>v[2]<-5.5))return;faces.push({vertices,color,z:vertices.reduce((n,v)=>n+v[2],0)/vertices.length});}
+function face(vertices,color){
+ // Clip crossing polygons instead of dropping whole faces as they pass the camera.
+ const near=-6.8,clipped=[];
+ for(let i=0;i<vertices.length;i++){const a=vertices[i],b=vertices[(i+1)%vertices.length],insideA=a[2]>=near,insideB=b[2]>=near;if(insideA)clipped.push(a);if(insideA!==insideB){const t=(near-a[2])/(b[2]-a[2]);clipped.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]),near]);}}
+ if(clipped.length<3)return;faces.push({vertices:clipped,color,z:clipped.reduce((n,v)=>n+v[2],0)/clipped.length});
+}
 function box(x,y,z,sx,sy,sz,c){
  const v=[[-1,0,-1],[1,0,-1],[1,1,-1],[-1,1,-1],[-1,0,1],[1,0,1],[1,1,1],[-1,1,1]].map(([a,b,c])=>[x+a*sx/2,y+b*sy,z+c*sz/2]);
  face([v[0],v[1],v[2],v[3]],c[0]);
@@ -123,9 +128,9 @@ function draw(){
  face([[-2.55,.025,z],[2.55,.025,z],[2.55,.025,z+3],[-2.55,.025,z+3]],'#9e956d');
  for(let lane=-1;lane<=1;lane++){const col=noise(n*7+lane)>.5?['#b5b092','#8f9279','#d1c9a7']:['#a6a58b','#858e77','#c4c1a0'];box(lane*1.5,.03,z+1.45,1.43,.045,2.86,col);if(n%4===0)box(lane*1.5+.38,.08,z+1.6,.18,.006,.65,['#929b79']);for(let q=0;q<3;q++){const px=lane*1.5-.55+noise(n*11+q)*1.1,pz=z+.2+noise(n*17+q)*2.5;face([[px,.081,pz],[px+.13,.081,pz],[px+.13,.081,pz+.16],[px,.081,pz+.16]],q%2?'#bbb899':'#dad0ae');}}
  for(const side of [-1,1]){box(side*2.48,.02,z+1.5,.22,.17,2.95,['#5c874f','#406a43','#8caf65']);if(i<20&&z>-.5&&n*3<342){tree(side*(3.4+noise(n+side)*2.8),z,n*3+side);tuft(side*(2.9+noise(n)*.5),z+.9,n);if(n%3===0)mushroom(side*3,z+1.8,n);}if(n%5===0)box(side*3.3,0,z,.7,.5,.8,stone);}}
- for(let k=0;k<3;k++){const z=(Math.floor(travel/45)+k)*45+30-travel;if(z>5&&z<85&&z+travel<320)ruin(z);}
+ for(let k=0;k<4;k++){const z=(Math.max(0,Math.floor((travel-30)/45))+k)*45+30-travel;if(z>-8.5&&z<85&&z+travel<320)ruin(z);}
  if(350-travel<95)destination(350-travel);
- for(const item of game.items){const z=item.z-travel;if(item.done||z<-.7||z>85)continue;const x=item.lane*1.5;
+ for(const item of game.items){const z=item.z-travel;if((item.done&&item.kind==='star')||z< -8.5||z>85)continue;const x=item.lane*1.5;
  if(item.kind==='star')star(x,1+Math.sin(t*2+item.z)*.12,z);
  if(item.kind==='log'&&item.fullWidth){box(0,0,z,4.9,.6,.65,bark);box(0,.6,z,4.6,.08,.5,leaf);for(const dx of [-2,-1,0,1,2]){box(dx,.08,z-.33,.05,.43,.015,['#513e30']);face([[dx-.16,.3,z-.34],[dx,.52,z-.34],[dx+.16,.3,z-.34]],'#ffe39a');}continue;}
  if(item.kind==='log'){box(x,0,z,1.22,.6,.65,bark);box(x,.6,z,.95,.09,.48,leaf);for(const dx of [-.4,0,.4])box(x+dx,.08,z-.33,.045,.43,.015,['#513e30']);box(x+.3,.62,z,.18,.18,.18,bark);}
